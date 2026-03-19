@@ -678,8 +678,8 @@ body::after{
       </button>
     </div>
 
-    <!-- Category Tabs -->
-    <div style="width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center">
+    <!-- Admin Content (hidden until login) -->
+    <div id="adminContent" style="display:none;width:100%;max-width:360px;flex-direction:column;align-items:center">
       <div class="gacha-tabs" id="adminCatTabs" style="margin-bottom:8px"></div>
       <div class="admin-count" id="adminCount"></div>
 
@@ -941,7 +941,16 @@ function showScreen(id){
   if(id==='setup')renderPlayerIcons();
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
-  if(id==='admin')renderAdminPanel();
+  if(id==='admin'){
+    var ac=document.getElementById('adminContent');
+    if(ac) ac.style.display=adminSession?'flex':'none';
+    var ah=document.getElementById('adminHistory');
+    if(ah) ah.style.display=adminSession?'block':'none';
+    document.getElementById('adminAuth').style.display=adminSession?'none':'flex';
+    document.getElementById('btnAddQ').style.display=adminSession?'flex':'none';
+    renderAdminPanel();
+    if(adminSession) loadHistory();
+  }
   if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll()}
 }
 
@@ -1761,6 +1770,7 @@ function adminLogin(){
   if(pw!==ADMIN_PW){showAdminStatus('비밀번호가 틀렸습니다','err');return}
   adminSession=true;
   document.getElementById('adminAuth').style.display='none';
+  document.getElementById('adminContent').style.display='flex';
   document.getElementById('btnAddQ').style.display='flex';
   var histEl=document.getElementById('adminHistory');
   if(histEl) histEl.style.display='block';
