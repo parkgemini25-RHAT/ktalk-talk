@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbitron:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -288,6 +289,42 @@ body::after{
 .summary-insight{width:100%;max-width:520px;padding:14px 18px;border-radius:14px;background:rgba(57,255,20,.06);border:2px solid rgba(57,255,20,.2);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--tertiary);margin-bottom:28px;animation:summaryFadeUp .8s ease-out .7s both}
 .summary-insight .material-symbols-outlined{font-size:20px;color:var(--tertiary)}
 .summary-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;animation:summaryFadeUp .8s ease-out .9s both}
+/* HEALTH SCORE */
+.summary-health{width:100%;max-width:520px;padding:20px;background:var(--surface);border-radius:16px;margin-bottom:20px;animation:summaryFadeUp .8s ease-out .6s both}
+.hs-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.hs-number{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:700;line-height:1}
+.hs-grade{padding:4px 12px;border-radius:20px;border:2px solid;font-size:12px;font-weight:700;letter-spacing:1px}
+.hs-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hs-label{width:60px;font-size:11px;font-weight:700;color:var(--on-surface-dim);letter-spacing:1px}
+.hs-bar{flex:1;height:6px;border-radius:3px;background:var(--outline-dim);overflow:hidden}
+.hs-bar-fill{height:100%;border-radius:3px;background:var(--secondary);transition:width 1s ease}
+.hs-val{width:28px;text-align:right;font-size:12px;font-weight:700;color:var(--on-surface-dim);font-family:'Space Grotesk',sans-serif}
+/* QR SECTION */
+.summary-qr{width:100%;max-width:520px;text-align:center;padding:20px;background:var(--surface);border-radius:16px;margin-bottom:20px;animation:summaryFadeUp .8s ease-out .8s both}
+.summary-qr canvas{border-radius:12px;margin:12px auto;display:block}
+.qr-hint{font-size:13px;color:var(--on-surface-dim);margin-bottom:12px}
+.commit-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--surface-bright);color:var(--on-surface-dim);margin:3px}
+.commit-chip.done{color:var(--tertiary);background:rgba(57,255,20,.08)}
+.commit-count{font-size:12px;color:var(--on-surface-dim);margin-top:8px;font-weight:700}
+/* COMMIT FORM */
+.commit-label{display:block;font-size:13px;font-weight:700;color:var(--on-surface-dim);margin:14px 0 6px;letter-spacing:1px}
+/* HISTORY */
+.history-section-title{font-size:13px;font-weight:700;color:var(--on-surface-dim);letter-spacing:2px;margin-bottom:12px}
+.history-chart{display:flex;gap:6px;align-items:flex-end;width:100%;max-width:520px;height:160px;padding:8px 0;overflow-x:auto}
+.hc-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:36px;gap:4px}
+.hc-val{font-size:11px;font-weight:700;font-family:'Space Grotesk',sans-serif}
+.hc-bar-wrap{width:100%;height:100px;display:flex;align-items:flex-end;justify-content:center}
+.hc-bar{width:24px;border-radius:6px 6px 0 0;min-height:4px;transition:height .8s ease}
+.hc-label{font-size:10px;color:var(--on-surface-dim)}
+.history-card{width:100%;max-width:520px;padding:14px 16px;background:var(--surface);border-radius:12px;margin-bottom:8px;border:1px solid var(--outline-dim)}
+.hc-top{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--on-surface-dim);margin-bottom:6px;flex-wrap:wrap}
+.hc-num{font-weight:700;color:var(--on-surface)}
+.hc-bottom{display:flex;gap:14px;align-items:center;font-size:14px;font-weight:600}
+.hc-score{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700}
+.hc-score small{font-size:12px;opacity:0.7}
+.history-commit{display:flex;gap:10px;align-items:baseline;padding:8px 12px;background:var(--surface);border-radius:10px;margin-bottom:6px}
+.hcc-name{font-size:13px;font-weight:700;color:var(--secondary);white-space:nowrap}
+.hcc-action{font-size:13px;color:var(--on-surface-dim)}
 /* SESSION BAR */
 .session-bar{
   width:100%;max-width:520px;margin-top:auto;padding-top:16px;
@@ -710,9 +747,48 @@ body::after{
     </div>
     <div class="summary-stats" id="summaryStats"></div>
     <div class="summary-insight" id="summaryInsight"></div>
+    <div class="summary-health" id="summaryHealthScore"></div>
+    <div class="summary-qr">
+      <div class="qr-hint">참여자분들, QR을 스캔하여 오늘의 다짐을 남겨주세요</div>
+      <div id="summaryQR"></div>
+      <div id="commitStatus"></div>
+    </div>
     <div class="summary-actions">
       <button class="btn-primary" onclick="restartSession()"><span class="material-symbols-outlined">replay</span>NEW SESSION</button>
+      <button class="btn-secondary" onclick="stopCommitPoll();showScreen('history')"><span class="material-symbols-outlined">bar_chart</span>성장 기록</button>
       <button class="btn-ghost" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</button>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN: COMMIT FORM (QR destination) -->
+<section id="screen-commit" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+    </div>
+    <div style="text-align:center;margin:16px 0">
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--on-surface)">오늘의 다짐</div>
+      <div id="commitSessionInfo" style="font-size:13px;color:var(--on-surface-dim);margin-top:6px"></div>
+    </div>
+    <div id="commitFormArea" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</section>
+
+<!-- SCREEN: HISTORY DASHBOARD -->
+<section id="screen-history" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('home')">close</span>
+    </div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--on-surface)">성장 기록</div>
+    </div>
+    <div id="historyContent" style="width:100%;max-width:520px"></div>
+    <div id="historyCommits" style="width:100%;max-width:520px"></div>
+    <div style="margin-top:20px;width:100%;max-width:480px">
+      <button class="btn-ghost" onclick="showScreen('home')" style="width:100%"><span class="material-symbols-outlined">home</span>HOME</button>
     </div>
   </div>
 </section>
@@ -860,10 +936,10 @@ var qs=[
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0,sessionId:null,healthScore:null};
 
 /* SCREEN TRANSITION */
-var screenIds=['home','setup','names','topic','staging','gacha','admin','summary'];
+var screenIds=['home','setup','names','topic','staging','gacha','admin','summary','commit','history'];
 function showScreen(id){
   screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
   var t=document.getElementById('screen-'+id);
@@ -877,7 +953,8 @@ function showScreen(id){
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
   if(id==='admin')renderAdminPanel();
-  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];syncSessionBar(false)}
+  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll()}
+  if(id==='history')loadHistory();
 }
 
 /* PLAYER SETUP — max 7 */
@@ -1125,6 +1202,8 @@ function endSession(){
   syncSessionBar(false);
   showScreen('summary');
   renderSummary();
+  saveSession();
+  startCommitPoll();
 }
 function renderSummary(){
   var totalSec=state.sessionSeconds;
@@ -1216,10 +1295,254 @@ function renderSummary(){
   document.getElementById('summaryInsight').innerHTML=ih;
 }
 function restartSession(){
-  state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];
+  state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;
   showScreen('staging');
   startSessionTimer();
 }
+
+/* ===== HEALTH SCORE & SESSION SAVE ===== */
+function calcHealthScore(){
+  var pc=state.playerCount;var times=state.speakTime;
+  var total=0;for(var i=0;i<pc;i++) total+=(times[i]||0);
+  // Balance (35%)
+  var mean=total/(pc||1);var variance=0;
+  for(var i=0;i<pc;i++){var d=(times[i]||0)-mean;variance+=d*d}
+  var cv=Math.sqrt(variance/(pc||1))/(mean||1);
+  var balanceScore=Math.max(0,Math.min(100,100-cv*200));
+  // Depth (20%)
+  var depthScore=[0,33,66,100][state.depth]||33;
+  // Density (20%)
+  var density=state.sessionSeconds>0?total/state.sessionSeconds:0;
+  var densityScore=Math.min(100,density*143);
+  // Coverage (15%)
+  var spoke=0;for(var i=0;i<pc;i++) if((times[i]||0)>0) spoke++;
+  var coverageScore=(spoke/(pc||1))*100;
+  // Commitment (10%) — 0 at save time
+  var totalScore=Math.round(balanceScore*0.35+depthScore*0.2+densityScore*0.2+coverageScore*0.15);
+  return{total:totalScore,balance:Math.round(balanceScore),depth:Math.round(depthScore),density:Math.round(densityScore),coverage:Math.round(coverageScore),commitment:0};
+}
+function scoreGrade(s){
+  if(s>=85) return{grade:'S',label:'EXCELLENT',color:'var(--primary)'};
+  if(s>=70) return{grade:'A',label:'GREAT',color:'var(--secondary)'};
+  if(s>=55) return{grade:'B',label:'GOOD',color:'var(--tertiary)'};
+  if(s>=40) return{grade:'C',label:'GROWING',color:'#FFD700'};
+  return{grade:'D',label:'WARMING UP',color:'var(--on-surface-dim)'};
+}
+function saveSession(){
+  var hs=calcHealthScore();
+  state.healthScore=hs;
+  if(!sb) return;
+  var row={
+    topic:state.selectedTopic||'warmup',
+    depth:state.depth,
+    duration_sec:state.sessionSeconds,
+    player_count:state.playerCount,
+    player_names:state.playerNames.slice(0,state.playerCount).map(function(n,i){return n||('플레이어 '+(i+1))}),
+    speak_times:state.speakTime.slice(0,state.playerCount),
+    turn_counts:state.turnCount.slice(0,state.playerCount),
+    health_score:hs.total,
+    score_balance:hs.balance,
+    score_depth:hs.depth,
+    score_density:hs.density,
+    score_coverage:hs.coverage,
+    score_commitment:0,
+    group_name:'default'
+  };
+  sb.from('sessions').insert(row).select().single().then(function(res){
+    if(res.error){console.log('session save error',res.error);return}
+    state.sessionId=res.data.id;
+    renderSummaryExtras();
+  }).catch(function(e){console.log('session save fail',e)});
+}
+
+/* ===== QR COMMITMENT SYSTEM ===== */
+function renderSummaryExtras(){
+  // Health Score section
+  var hs=state.healthScore;
+  if(!hs) return;
+  var g=scoreGrade(hs.total);
+  var hsEl=document.getElementById('summaryHealthScore');
+  if(hsEl){
+    var hh='<div class="hs-header">';
+    hh+='<div class="hs-number" style="color:'+g.color+'">'+hs.total+'</div>';
+    hh+='<div class="hs-grade" style="border-color:'+g.color+';color:'+g.color+'">'+g.grade+' '+g.label+'</div>';
+    hh+='</div>';
+    var metrics=[{l:'Balance',v:hs.balance},{l:'Depth',v:hs.depth},{l:'Density',v:hs.density},{l:'Coverage',v:hs.coverage},{l:'Commit',v:hs.commitment}];
+    metrics.forEach(function(m){
+      hh+='<div class="hs-row"><span class="hs-label">'+m.l+'</span><div class="hs-bar"><div class="hs-bar-fill" style="width:'+m.v+'%"></div></div><span class="hs-val">'+m.v+'</span></div>';
+    });
+    hsEl.innerHTML=hh;
+  }
+  // QR Code
+  if(state.sessionId&&typeof QRCode!=='undefined'){
+    var qrEl=document.getElementById('summaryQR');
+    if(qrEl){
+      var url=location.href.split('#')[0]+'#commit/'+state.sessionId;
+      var canvas=document.createElement('canvas');
+      QRCode.toCanvas(canvas,url,{width:180,margin:2,color:{dark:'#00F0FF',light:'#0B0B1A'}},function(err){
+        if(err) return;
+        qrEl.innerHTML='';
+        qrEl.appendChild(canvas);
+      });
+    }
+  }
+  // Commitment status
+  renderCommitStatus();
+}
+var commitPollTimer=null;
+function renderCommitStatus(){
+  if(!state.sessionId||!sb) return;
+  sb.from('commitments').select('player_name,player_index').eq('session_id',state.sessionId).then(function(res){
+    var el=document.getElementById('commitStatus');
+    if(!el) return;
+    var submitted={};
+    if(res.data) res.data.forEach(function(c){submitted[c.player_index]=true});
+    var h='';var count=0;
+    for(var i=0;i<state.playerCount;i++){
+      var name=state.playerNames[i]||('플레이어 '+(i+1));
+      var done=submitted[i];
+      if(done) count++;
+      h+='<span class="commit-chip'+(done?' done':'')+'">'+( done?'✅':'⬜')+' '+escapeHtml(name)+'</span>';
+    }
+    h+='<div class="commit-count">'+count+'/'+state.playerCount+' 제출 완료</div>';
+    el.innerHTML=h;
+    // Update commitment score
+    if(state.healthScore){
+      var commitScore=Math.round((count/state.playerCount)*100);
+      state.healthScore.commitment=commitScore;
+      state.healthScore.total=Math.round(state.healthScore.balance*0.35+state.healthScore.depth*0.2+state.healthScore.density*0.2+state.healthScore.coverage*0.15+commitScore*0.1);
+      // Re-render health score display
+      var g=scoreGrade(state.healthScore.total);
+      var numEl=document.querySelector('.hs-number');
+      if(numEl){numEl.textContent=state.healthScore.total;numEl.style.color=g.color}
+      var grEl=document.querySelector('.hs-grade');
+      if(grEl){grEl.textContent=g.grade+' '+g.label;grEl.style.color=g.color;grEl.style.borderColor=g.color}
+      // Update commitment bar
+      var bars=document.querySelectorAll('.hs-row');
+      if(bars.length>=5){var lastBar=bars[4].querySelector('.hs-bar-fill');if(lastBar)lastBar.style.width=commitScore+'%';var lastVal=bars[4].querySelector('.hs-val');if(lastVal)lastVal.textContent=commitScore}
+      // Update DB
+      if(sb&&state.sessionId){
+        sb.from('sessions').update({score_commitment:commitScore,health_score:state.healthScore.total}).eq('id',state.sessionId).then(function(){});
+      }
+    }
+  });
+}
+function startCommitPoll(){
+  stopCommitPoll();
+  commitPollTimer=setInterval(renderCommitStatus,5000);
+}
+function stopCommitPoll(){
+  if(commitPollTimer){clearInterval(commitPollTimer);commitPollTimer=null}
+}
+
+/* ===== COMMIT FORM (QR destination) ===== */
+function loadCommitForm(sessionId){
+  if(!sb) return;
+  sb.from('sessions').select('*').eq('id',sessionId).single().then(function(res){
+    if(res.error||!res.data){document.getElementById('commitFormArea').innerHTML='<div style="color:var(--primary)">세션을 찾을 수 없습니다</div>';return}
+    var sess=res.data;
+    var h='<select id="commitPlayer" class="admin-input" style="max-width:100%">';
+    for(var i=0;i<sess.player_count;i++){
+      h+='<option value="'+i+'">'+escapeHtml(sess.player_names[i])+'</option>';
+    }
+    h+='</select>';
+    h+='<label class="commit-label">오늘 세션 후기</label>';
+    h+='<textarea id="commitReflection" class="admin-input" rows="3" placeholder="오늘 대화에서 인상적이었던 점..."></textarea>';
+    h+='<label class="commit-label">다음까지 해올 다짐</label>';
+    h+='<textarea id="commitAction" class="admin-input" rows="3" placeholder="구체적인 액션 아이템..."></textarea>';
+    h+='<button class="btn-primary" onclick="submitCommit(\''+sessionId+'\')" style="margin-top:12px"><span class="material-symbols-outlined">check</span>제출하기</button>';
+    h+='<div id="commitResult"></div>';
+    document.getElementById('commitFormArea').innerHTML=h;
+    // Show session info
+    var cat=cats[sess.topic];
+    var info=cat?(cat.e+' '+cat.l):'';
+    info+=' · '+fmtSessionTime(sess.duration_sec);
+    document.getElementById('commitSessionInfo').textContent=info;
+  });
+}
+function submitCommit(sessionId){
+  var idx=parseInt(document.getElementById('commitPlayer').value);
+  var ref=document.getElementById('commitReflection').value.trim();
+  var act=document.getElementById('commitAction').value.trim();
+  if(!ref&&!act){document.getElementById('commitResult').innerHTML='<div style="color:var(--primary);margin-top:8px">후기 또는 다짐을 입력해주세요</div>';return}
+  if(!sb) return;
+  var name=document.getElementById('commitPlayer').options[idx].text;
+  sb.from('commitments').insert({session_id:sessionId,player_name:name,player_index:idx,reflection:ref,action_item:act}).then(function(res){
+    if(res.error){document.getElementById('commitResult').innerHTML='<div style="color:var(--primary)">저장 실패</div>';return}
+    document.getElementById('commitFormArea').innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:48px;margin-bottom:16px">✅</div><div style="font-size:18px;font-weight:700;color:var(--tertiary)">제출 완료!</div><div style="color:var(--on-surface-dim);margin-top:8px">다짐이 기록되었습니다</div></div>';
+  });
+}
+
+/* ===== HISTORY DASHBOARD ===== */
+function loadHistory(){
+  if(!sb) return;
+  sb.from('sessions').select('*').order('created_at',{ascending:false}).limit(20).then(function(res){
+    if(res.error||!res.data){return}
+    var sessions=res.data;
+    var el=document.getElementById('historyContent');
+    if(!el) return;
+    var h='';
+    // Score trend chart (simple ASCII-style with divs)
+    if(sessions.length>1){
+      var reversed=sessions.slice().reverse();
+      var maxS=100;
+      h+='<div class="history-section-title">HEALTH SCORE 추이</div>';
+      h+='<div class="history-chart">';
+      reversed.forEach(function(s,i){
+        var pct=(s.health_score||0);
+        var g=scoreGrade(pct);
+        h+='<div class="hc-col">';
+        h+='<div class="hc-val" style="color:'+g.color+'">'+pct+'</div>';
+        h+='<div class="hc-bar-wrap"><div class="hc-bar" style="height:'+pct+'%;background:'+g.color+'"></div></div>';
+        h+='<div class="hc-label">#'+(i+1)+'</div>';
+        h+='</div>';
+      });
+      h+='</div>';
+    }
+    // Session list
+    h+='<div class="history-section-title" style="margin-top:20px">세션 기록</div>';
+    sessions.forEach(function(s,i){
+      var cat=cats[s.topic];
+      var g=scoreGrade(s.health_score||0);
+      var date=new Date(s.created_at);
+      var dateStr=(date.getMonth()+1)+'/'+date.getDate();
+      h+='<div class="history-card">';
+      h+='<div class="hc-top"><span class="hc-num">#'+(sessions.length-i)+'</span><span>'+dateStr+'</span><span>'+(cat?cat.e+' '+cat.l:'')+'</span><span>'+depthLabels[s.depth]+'</span></div>';
+      h+='<div class="hc-bottom"><span class="hc-score" style="color:'+g.color+'">'+( s.health_score||0)+' <small>'+g.grade+'</small></span><span>'+fmtSessionTime(s.duration_sec)+'</span><span>'+s.player_count+'명</span></div>';
+      h+='</div>';
+    });
+    // Load commitments for latest session
+    if(sessions.length>0){
+      var latest=sessions[0];
+      sb.from('commitments').select('*').eq('session_id',latest.id).order('player_index').then(function(cRes){
+        if(!cRes.data||!cRes.data.length) return;
+        var ch='<div class="history-section-title" style="margin-top:20px">최근 다짐 이력</div>';
+        cRes.data.forEach(function(c){
+          ch+='<div class="history-commit"><span class="hcc-name">'+escapeHtml(c.player_name)+'</span>';
+          if(c.action_item) ch+='<span class="hcc-action">'+escapeHtml(c.action_item)+'</span>';
+          ch+='</div>';
+        });
+        var commitArea=document.getElementById('historyCommits');
+        if(commitArea) commitArea.innerHTML=ch;
+      });
+    }
+    el.innerHTML=h;
+  });
+}
+
+/* ===== HASH ROUTING ===== */
+function handleHash(){
+  var hash=location.hash;
+  if(hash.indexOf('#commit/')===0){
+    var sid=hash.replace('#commit/','');
+    showScreen('commit');
+    loadCommitForm(sid);
+    return true;
+  }
+  return false;
+}
+window.addEventListener('hashchange',function(){handleHash()});
+
 /* Keyboard shortcut: 1~7 toggles speaker on staging & gacha screens */
 document.addEventListener('keydown',function(e){
   var onStaging=document.getElementById('screen-staging');
@@ -1629,6 +1952,7 @@ function initApp(){
     if(ok){console.log('DB loaded: '+qs.length+' questions')}
     else{qs=hardcodedQs.slice();console.log('Offline: using built-in questions')}
   });
+  handleHash();
 }
 initApp();
 </script>
