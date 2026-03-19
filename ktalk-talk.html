@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KTALK TALK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0B0B1A;
+  --surface:#1A1A3A;
+  --surface-high:#1E1E32;
+  --surface-highest:#24243A;
+  --surface-bright:#2A2A42;
+  --primary:#FF007F;
+  --primary-light:#FF89AB;
+  --primary-dim:#BC005C;
+  --secondary:#00F0FF;
+  --secondary-dim:#005E64;
+  --tertiary:#39FF14;
+  --on-surface:#E9E6FC;
+  --on-surface-dim:#ABA9BE;
+  --on-primary:#000;
+  --outline:#757387;
+  --outline-dim:#474658;
+}
+html,body{height:100%;overflow-x:hidden}
+body{
+  background:var(--bg);
+  font-family:'Plus Jakarta Sans','Apple SD Gothic Neo',sans-serif;
+  color:var(--on-surface);
+  position:relative;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);
+}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-size:24px;vertical-align:middle}
+.font-bh{font-family:'Black Han Sans',sans-serif}
+.font-sg{font-family:'Space Grotesk',sans-serif}
+.screen{
+  display:none;flex-direction:column;align-items:center;
+  min-height:100vh;padding:16px 16px 88px;
+  animation:fadeIn .32s ease;
+}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:390px;padding:8px 0 12px;
+}
+.header-logo{display:flex;align-items:center;gap:6px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:1px;color:var(--on-surface)}
+.header-logo .material-symbols-outlined{color:var(--primary-light);font-size:22px}
+.btn-primary{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;max-width:340px;padding:16px 24px;
+  background:var(--primary);color:#fff;
+  border:4px solid #fff;border-radius:12px;
+  font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 6px 0 var(--primary-dim);
+  transition:transform .1s,box-shadow .1s;user-select:none;
+}
+.btn-primary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--primary-dim)}
+.btn-secondary{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 24px;
+  background:var(--surface-bright);color:var(--secondary);
+  border:4px solid var(--outline-dim);border-radius:12px;
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;
+  box-shadow:0 6px 0 var(--outline-dim);
+  transition:transform .1s,box-shadow .1s;user-select:none;
+}
+.btn-secondary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--outline-dim)}
+.btn-secondary:hover{border-color:var(--secondary);box-shadow:0 6px 0 var(--secondary-dim),0 0 15px 2px rgba(0,240,255,0.3)}
+.btn-ghost{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 18px;background:transparent;color:var(--on-surface-dim);
+  border:2px solid var(--outline-dim);border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .18s;user-select:none;
+}
+.btn-ghost:hover{border-color:var(--primary-light);color:var(--primary-light)}
+.neon-pink{text-shadow:0 0 10px rgba(255,0,127,0.6),0 0 30px rgba(255,0,127,0.3)}
+.neon-cyan{text-shadow:0 0 10px rgba(0,240,255,0.6),0 0 30px rgba(0,240,255,0.3)}
+.neon-green{text-shadow:0 0 10px rgba(57,255,20,0.6),0 0 30px rgba(57,255,20,0.3)}
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  display:flex;justify-content:center;
+  background:var(--surface);border-top:2px solid var(--outline-dim);
+  padding:8px 0 env(safe-area-inset-bottom,8px);
+}
+.nav-item{
+  flex:1;max-width:100px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 0;cursor:pointer;color:var(--on-surface-dim);
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  transition:color .18s;user-select:none;
+}
+.nav-item.active,.nav-item:hover{color:var(--primary-light)}
+.nav-item.active .material-symbols-outlined{color:var(--primary-light)}
+.content{width:100%;max-width:390px;display:flex;flex-direction:column;align-items:center}
+
+/* HOME */
+.hero{text-align:center;padding:32px 0 24px}
+.hero-title{font-family:'Black Han Sans',sans-serif;font-size:48px;letter-spacing:-1px;line-height:1.1}
+.hero-sub{font-size:15px;color:var(--on-surface-dim);margin-top:8px;line-height:1.5}
+.hero-tagline{font-size:12px;color:var(--secondary);margin-top:6px;letter-spacing:0.5px}
+.features{display:flex;gap:12px;margin:28px 0;width:100%;max-width:340px}
+.feat-card{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:20px 8px;background:var(--surface);border-radius:12px;
+  border:2px solid var(--outline-dim);transition:border-color .2s,box-shadow .2s;cursor:default;
+}
+.feat-card:hover{border-color:var(--primary-light);box-shadow:0 0 15px 2px rgba(255,0,127,0.15)}
+.feat-card .material-symbols-outlined{font-size:32px;color:var(--primary-light)}
+.feat-card span:last-child{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--on-surface-dim)}
+.topics-section{
+  width:100%;max-width:340px;padding:20px;
+  background:var(--surface);border-radius:12px;
+  border:2px solid var(--outline-dim);margin-bottom:28px;
+}
+.topics-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--secondary);letter-spacing:1px;margin-bottom:6px}
+.topics-desc{font-size:12px;color:var(--on-surface-dim);line-height:1.5;margin-bottom:10px}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{padding:4px 10px;background:var(--surface-bright);border-radius:20px;font-size:11px;color:var(--primary-light);font-weight:600}
+
+/* SETUP */
+.setup-title{font-family:'Black Han Sans',sans-serif;font-size:36px;text-align:center;margin:40px 0 32px}
+.player-counter{
+  display:flex;align-items:center;gap:24px;
+  padding:24px 32px;background:var(--surface);border-radius:16px;
+  border:4px solid #fff;margin-bottom:20px;
+}
+.counter-btn{
+  width:48px;height:48px;border-radius:50%;border:3px solid var(--outline);
+  background:var(--surface-bright);color:var(--on-surface);
+  font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;user-select:none;
+}
+.counter-btn:hover{border-color:var(--secondary);color:var(--secondary);box-shadow:0 0 12px rgba(0,240,255,0.3)}
+.counter-btn:active{transform:scale(0.9)}
+.counter-display{text-align:center}
+.counter-num{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;color:var(--secondary);line-height:1}
+.counter-label{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;color:var(--on-surface-dim);margin-top:4px}
+.player-icons{display:flex;gap:8px;justify-content:center;margin-bottom:32px;flex-wrap:wrap;max-width:300px}
+.player-icons .material-symbols-outlined{font-size:32px;color:var(--primary-light);transition:all .2s}
+.player-icons .material-symbols-outlined.dim{color:var(--outline-dim)}
+
+/* NAMES */
+.names-title{font-family:'Black Han Sans',sans-serif;font-size:32px;text-align:center;margin:32px 0 8px}
+.names-sub{font-size:12px;color:var(--on-surface-dim);text-align:center;margin-bottom:20px}
+.names-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.name-row{display:flex;align-items:center;gap:10px}
+.name-num{
+  flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  background:var(--surface-bright);border:2px solid var(--outline-dim);
+  color:var(--primary-light);font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.name-input{
+  flex:1;padding:12px 16px;
+  background:var(--surface);color:var(--on-surface);
+  border:2px solid var(--outline-dim);border-radius:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .18s;
+}
+.name-input:focus{border-color:var(--secondary);box-shadow:0 0 10px rgba(0,240,255,0.2)}
+
+/* TOPIC */
+.topic-header{text-align:center;margin:24px 0}
+.topic-header h2{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:2px}
+.topic-header p{font-size:12px;color:var(--on-surface-dim);margin-top:4px}
+.topic-grid{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin-bottom:28px}
+.topic-card{
+  display:flex;align-items:center;gap:14px;
+  padding:18px 20px;background:var(--surface);border-radius:12px;
+  border:3px solid var(--outline-dim);cursor:pointer;
+  transition:all .18s;user-select:none;
+}
+.topic-card:hover{border-color:var(--secondary)}
+.topic-card.selected{border-color:var(--primary);box-shadow:0 0 20px 3px rgba(255,0,127,0.25);background:var(--surface-high)}
+.topic-card .material-symbols-outlined{font-size:28px;color:var(--secondary)}
+.topic-card.selected .material-symbols-outlined{color:var(--primary-light)}
+.topic-card-label{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.5px}
+.topic-card-sub{font-size:11px;color:var(--on-surface-dim);margin-top:2px}
+
+/* GACHA */
+.gacha-tabs{
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+  width:100%;max-width:390px;margin-bottom:16px;
+}
+.gacha-tab{
+  padding:6px 12px;border-radius:20px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  border:2px solid var(--outline-dim);color:var(--on-surface-dim);
+  background:var(--surface);transition:all .18s;user-select:none;
+}
+.gacha-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 12px rgba(255,0,127,0.3)}
+.question-card{
+  width:100%;max-width:360px;
+  background:var(--surface);border-radius:16px;
+  border:4px solid #fff;padding:24px 20px 20px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  animation:popIn .38s cubic-bezier(0.34,1.5,0.64,1);
+  position:relative;
+}
+@keyframes popIn{from{transform:translateY(-18px) scale(0.9) rotate(-2deg);opacity:0}to{transform:none;opacity:1}}
+.q-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:20px;
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  background:var(--surface-bright);color:var(--tertiary);margin-bottom:12px;
+}
+.q-new{
+  position:absolute;top:-10px;right:16px;
+  padding:4px 12px;border-radius:8px;
+  background:var(--tertiary);color:#000;
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;
+}
+.q-text{font-size:18px;font-weight:700;line-height:1.65;margin-bottom:16px;color:var(--on-surface)}
+.q-tip{
+  padding:12px 14px;border-radius:10px;
+  background:var(--surface-high);border-left:4px solid var(--secondary);
+  font-size:12px;line-height:1.6;color:var(--on-surface-dim);margin-bottom:16px;
+}
+.q-tip-label{display:flex;align-items:center;gap:4px;font-weight:700;color:var(--secondary);margin-bottom:4px;font-size:11px;letter-spacing:1px}
+.q-tip-label .material-symbols-outlined{font-size:16px}
+.q-bbang-emoji{font-size:64px;text-align:center;margin:16px 0 8px}
+.q-bbang-text{font-size:20px;font-weight:700;text-align:center;margin-bottom:16px;color:var(--primary-light)}
+.timer-section{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+.timer-display{
+  font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;
+  color:var(--secondary);letter-spacing:2px;transition:color .3s;
+}
+.timer-display.hurry{color:var(--primary);animation:pulse .5s ease infinite}
+.timer-display.timeup{color:var(--on-surface-dim)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.timer-label{
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:3px;color:var(--on-surface-dim);text-align:center;margin-bottom:8px;
+}
+.timer-label.hurry-label{color:var(--primary);animation:blink .8s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.player-turn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  color:var(--secondary);letter-spacing:1px;margin-bottom:4px;
+}
+.player-turn .material-symbols-outlined{font-size:20px}
+.player-turn-num{color:var(--primary-light);font-size:18px}
+.player-turn.next-anim{animation:turnPop .5s ease}
+@keyframes turnPop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+.nudge-toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);
+  z-index:150;padding:16px 28px;border-radius:16px;
+  background:rgba(26,26,58,0.95);border:3px solid var(--primary);
+  box-shadow:0 0 30px rgba(255,0,127,0.4);
+  font-family:'Black Han Sans',sans-serif;font-size:22px;
+  color:var(--primary-light);text-align:center;white-space:nowrap;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s,transform .3s;
+}
+.nudge-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.gacha-actions{display:flex;gap:10px;margin-top:4px;width:100%;max-width:360px}
+.gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
+
+/* ===== SLOT MACHINE OVERLAY ===== */
+.slot-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(11,11,26,0.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;
+}
+.slot-overlay.active{display:flex}
+.slot-title{
+  font-family:'Black Han Sans',sans-serif;font-size:28px;
+  text-align:center;line-height:1.3;
+}
+.slot-sub{font-size:13px;color:var(--on-surface-dim);text-align:center}
+.slot-machine{
+  display:flex;gap:16px;align-items:center;justify-content:center;
+  padding:24px 20px;background:var(--surface);
+  border:4px solid #fff;border-radius:20px;
+  box-shadow:0 0 40px rgba(255,0,127,0.2),0 8px 0 var(--primary-dim);
+}
+.slot-reel{
+  width:80px;height:100px;overflow:hidden;
+  border-radius:10px;background:var(--bg);
+  border:3px solid var(--outline);position:relative;
+}
+.slot-strip{
+  display:flex;flex-direction:column;align-items:center;
+  position:absolute;left:0;right:0;
+  transition:transform .1s linear;
+}
+.slot-item{
+  width:80px;height:100px;display:flex;align-items:center;justify-content:center;
+  font-size:36px;flex-shrink:0;
+}
+.slot-divider{
+  font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;
+  color:var(--primary);
+}
+.slot-info{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--on-surface-dim);
+}
+.slot-info .material-symbols-outlined{font-size:16px;color:var(--secondary)}
+.slot-result{
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  color:var(--tertiary);letter-spacing:2px;
+  opacity:0;transition:opacity .3s;
+}
+.slot-result.show{opacity:1}
+
+/* ADMIN */
+.admin-title{font-family:'Black Han Sans',sans-serif;font-size:36px;text-align:center;margin:24px 0 8px}
+.admin-sub{font-size:12px;color:var(--on-surface-dim);text-align:center;margin-bottom:20px}
+.admin-input{
+  width:100%;max-width:340px;padding:12px 16px;
+  background:var(--surface);color:var(--on-surface);
+  border:2px solid var(--outline-dim);border-radius:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .18s;
+}
+.admin-input:focus{border-color:var(--secondary);box-shadow:0 0 10px rgba(0,240,255,0.2)}
+.admin-textarea{min-height:80px;resize:vertical;width:100%}
+.admin-select{
+  width:100%;padding:12px 16px;
+  background:var(--surface);color:var(--on-surface);
+  border:2px solid var(--outline-dim);border-radius:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
+  outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;
+}
+.admin-select:focus{border-color:var(--secondary)}
+.admin-q-list{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.admin-q-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:14px 16px;background:var(--surface);border-radius:10px;
+  border:2px solid var(--outline-dim);transition:border-color .18s;
+}
+.admin-q-item:hover{border-color:var(--primary-light)}
+.admin-q-item-num{
+  flex-shrink:0;width:24px;height:24px;border-radius:50%;
+  background:var(--surface-bright);color:var(--on-surface-dim);
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  margin-top:2px;
+}
+.admin-q-item-text{flex:1;font-size:13px;line-height:1.5;color:var(--on-surface)}
+.admin-q-item-tip{font-size:11px;color:var(--on-surface-dim);margin-top:4px;font-style:italic}
+.admin-q-actions{display:flex;gap:2px;flex-shrink:0}
+.admin-q-actions button{
+  background:transparent;border:none;color:var(--on-surface-dim);
+  cursor:pointer;padding:4px;border-radius:6px;transition:color .18s;
+}
+.admin-q-actions button:hover{color:var(--secondary)}
+.admin-q-actions button.del:hover{color:var(--primary)}
+.admin-form{
+  width:100%;max-width:360px;padding:20px;
+  background:var(--surface);border-radius:12px;
+  border:2px solid var(--secondary-dim);margin-top:12px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.admin-form-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--secondary);letter-spacing:2px}
+.admin-status{
+  font-size:12px;text-align:center;padding:6px 12px;border-radius:8px;
+  max-width:340px;width:100%;
+}
+.admin-status.ok{background:rgba(57,255,20,0.1);color:var(--tertiary)}
+.admin-status.err{background:rgba(255,0,127,0.1);color:var(--primary)}
+.admin-count{
+  font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;
+  color:var(--on-surface-dim);letter-spacing:1px;text-align:center;margin:4px 0;
+}
+.bbang-pct-box{
+  width:100%;max-width:360px;padding:16px 20px;
+  background:var(--surface);border-radius:12px;
+  border:2px solid var(--outline-dim);margin:8px 0 12px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.bbang-pct-label{
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  color:var(--secondary);letter-spacing:1px;
+  display:flex;align-items:center;gap:6px;
+}
+.bbang-pct-row{display:flex;align-items:center;gap:12px}
+.bbang-pct-row input[type=range]{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:6px;border-radius:3px;background:var(--outline-dim);outline:none;
+}
+.bbang-pct-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--primary);border:3px solid #fff;cursor:pointer;
+  box-shadow:0 0 10px rgba(255,0,127,0.4);
+}
+.bbang-pct-val{
+  font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;
+  color:var(--primary-light);min-width:48px;text-align:right;
+}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: HOME -->
+<section id="screen-home" class="screen active">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="hero">
+      <div class="hero-title neon-pink">케이톡톡</div>
+      <div class="hero-sub">대화가 즐거워지는<br>아케이드 파티 게임</div>
+      <div class="hero-tagline">어색한 분위기를 깨는 가장 짜릿한 대화 게임</div>
+    </div>
+    <div class="features">
+      <div class="feat-card"><span class="material-symbols-outlined">sports_esports</span><span>PLAY</span></div>
+      <div class="feat-card"><span class="material-symbols-outlined">chat</span><span>TALK</span></div>
+      <div class="feat-card"><span class="material-symbols-outlined">celebration</span><span>PARTY</span></div>
+    </div>
+    <div class="topics-section">
+      <div class="topics-title neon-cyan">끝없는 주제</div>
+      <div class="topics-desc">1,000개 이상의 다양한 질문 카드로<br>어떤 상황에서도 대화를 이어가세요</div>
+      <div class="tags">
+        <span class="tag">#첫만남</span><span class="tag">#회식</span><span class="tag">#그룹코칭</span><span class="tag">#팀빌딩</span>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="showScreen('setup')"><span class="material-symbols-outlined">sports_esports</span>게임 시작</button>
+  </div>
+</section>
+
+<!-- SCREEN 2: SETUP -->
+<section id="screen-setup" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="setup-title">몇 명인가요?</div>
+    <div class="player-counter">
+      <button class="counter-btn" onclick="changePlayerCount(-1)"><span class="material-symbols-outlined">remove</span></button>
+      <div class="counter-display">
+        <div class="counter-num neon-cyan" id="playerNum">04</div>
+        <div class="counter-label">PLAYERS</div>
+      </div>
+      <button class="counter-btn" onclick="changePlayerCount(1)"><span class="material-symbols-outlined">add</span></button>
+    </div>
+    <div class="player-icons" id="playerIcons"></div>
+    <button class="btn-primary" onclick="showScreen('names')"><span class="material-symbols-outlined">fast_forward</span>NEXT STAGE</button>
+  </div>
+</section>
+
+<!-- SCREEN 2.5: PLAYER NAMES -->
+<section id="screen-names" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="names-title">이름을 알려주세요</div>
+    <div class="names-sub">각 플레이어의 이름 또는 닉네임을 입력하세요</div>
+    <div class="names-list" id="namesList"></div>
+    <button class="btn-primary" onclick="saveNames()"><span class="material-symbols-outlined">fast_forward</span>NEXT STAGE</button>
+  </div>
+</section>
+
+<!-- SCREEN 3: TOPIC -->
+<section id="screen-topic" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="topic-header">
+      <h2 class="font-sg">CHOOSE TOPIC</h2>
+      <p>Select a category for your session</p>
+    </div>
+    <div class="topic-grid" id="topicGrid"></div>
+    <button class="btn-primary" id="btnTopicNext" onclick="startSlotFromTopic()" style="opacity:0.4;pointer-events:none">
+      <span>NEXT</span><span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+  </div>
+</section>
+
+<!-- SCREEN 4: GACHA -->
+<section id="screen-gacha" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="gacha-tabs" id="gachaTabs"></div>
+    <div class="player-turn" id="playerTurn"></div>
+    <div class="timer-label" id="timerLabel">TIME REMAINING</div>
+    <div class="timer-section"><div class="timer-display" id="timerDisplay">60</div></div>
+    <div id="questionArea"></div>
+    <div class="gacha-actions" style="margin-top:16px">
+      <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
+      <button class="btn-ghost" onclick="nextTurn()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
+      <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN 5: ADMIN -->
+<section id="screen-admin" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('home')">close</span>
+    </div>
+    <div class="admin-title">ADMIN</div>
+    <div class="admin-sub">질문 카드 관리</div>
+    <div id="adminStatus"></div>
+
+    <!-- Auth Gate -->
+    <div id="adminAuth" style="width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px">
+      <input type="password" id="adminPw" class="admin-input" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="btn-primary" onclick="adminLogin()" style="max-width:340px">
+        <span class="material-symbols-outlined">lock_open</span>LOGIN
+      </button>
+    </div>
+
+    <!-- Category Tabs -->
+    <div style="width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center">
+      <div class="gacha-tabs" id="adminCatTabs" style="margin-bottom:8px"></div>
+      <div class="admin-count" id="adminCount"></div>
+
+      <!-- Add button (shown after login, above list) -->
+      <button class="btn-secondary" onclick="openAddForm()" id="btnAddQ" style="display:none;margin:8px 0;width:100%;max-width:360px">
+        <span class="material-symbols-outlined">add_circle</span>ADD QUESTION
+      </button>
+
+      <!-- Add/Edit Form (shown inline above list) -->
+      <div class="admin-form" id="adminForm" style="display:none;margin-bottom:12px">
+        <div class="admin-form-title" id="adminFormTitle">ADD QUESTION</div>
+        <input type="hidden" id="editQId">
+        <select id="editQCat" class="admin-select" onchange="toggleBbangFields()">
+          <option value="warmup">🌱 워밍업</option>
+          <option value="jira">🚀 Jira·실행</option>
+          <option value="leader">🧭 리더십</option>
+          <option value="peer">🤝 동료</option>
+          <option value="reflection">🪞 회고</option>
+          <option value="bbang">🎊 꽝!</option>
+        </select>
+        <div id="normalFields">
+          <textarea id="editQText" class="admin-textarea admin-input" placeholder="질문 텍스트" style="margin-bottom:8px"></textarea>
+          <textarea id="editQTip" class="admin-textarea admin-input" placeholder="퍼실리테이터 팁"></textarea>
+        </div>
+        <div id="bbangFields" style="display:none">
+          <input id="editQBbangMsg" class="admin-input" placeholder="꽝 메시지 (예: 꽝!)" style="margin-bottom:8px">
+          <textarea id="editQBbangTip" class="admin-textarea admin-input" placeholder="꽝 팁"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-primary" onclick="saveQuestion()" style="flex:1;max-width:none">
+            <span class="material-symbols-outlined">save</span>SAVE
+          </button>
+          <button class="btn-ghost" onclick="cancelEdit()" style="flex:1">CANCEL</button>
+        </div>
+      </div>
+
+      <!-- Question List -->
+      <div class="admin-q-list" id="adminQuestionList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SLOT MACHINE OVERLAY -->
+<div class="slot-overlay" id="slotOverlay">
+  <div class="slot-title">카드를 뽑는 중...</div>
+  <div class="slot-sub">Pick a card!</div>
+  <div class="slot-machine">
+    <div class="slot-reel" id="reel0"><div class="slot-strip" id="strip0"></div></div>
+    <div class="slot-divider">|</div>
+    <div class="slot-reel" id="reel1"><div class="slot-strip" id="strip1"></div></div>
+    <div class="slot-divider">|</div>
+    <div class="slot-reel" id="reel2"><div class="slot-strip" id="strip2"></div></div>
+  </div>
+  <div class="slot-info"><span class="material-symbols-outlined">category</span><span id="slotTopic">-</span></div>
+  <div class="slot-result" id="slotResult">MATCHED!</div>
+</div>
+
+<!-- NUDGE TOAST -->
+<div class="nudge-toast" id="nudgeToast"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="nav-item active" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</div>
+  <div class="nav-item" onclick="if(state.selectedTopic)reDraw();else showScreen('topic')"><span class="material-symbols-outlined">sports_esports</span>PLAY</div>
+</nav>
+
+<script>
+/* SUPABASE CONFIG */
+var SUPABASE_URL='https://pwvarkeuzhaqlfpmgcxj.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dmFya2V1emhhcWxmcG1nY3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyMzg1NjEsImV4cCI6MjA4NDgxNDU2MX0.KgM6B7MBAYJJkfxhOUV4xcvJn2my3qzcAqoQmUE81I0';
+var sb=null;
+try{sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null}catch(e){sb=null}
+var dbReady=false;
+var adminSession=null;
+var ADMIN_PW='ktalk2024!';
+
+/* DATA */
+var cats={
+  warmup:{l:'워밍업',c:'#4a8c5c',e:'🌱',icon:'local_fire_department',en:'Warm-up'},
+  jira:{l:'Jira·실행',c:'#e85d26',e:'🚀',icon:'task_alt',en:'Execution'},
+  leader:{l:'리더십',c:'#5b7fa6',e:'🧭',icon:'military_tech',en:'Leadership'},
+  peer:{l:'동료',c:'#9b59b6',e:'🤝',icon:'groups',en:'Colleagues'},
+  reflection:{l:'회고',c:'#c0392b',e:'🪞',icon:'history',en:'Retrospective'},
+  bbang:{l:'꽝!',c:'#f0a500',e:'🎊',icon:'celebration',en:'Special'}
+};
+var qs=[
+  {c:'warmup',t:'오늘 이 자리에 오면서 머릿속에 맴돌던 단어 하나가 있다면?',tip:'판단 없이 그냥 받아주세요. 부정적 단어가 나올수록 좋습니다.'},
+  {c:'warmup',t:'요즘 가장 "잘 되고 있다"고 느끼는 것 하나와,\n"안 되고 있다"고 느끼는 것 하나는?',tip:'일 이야기가 아니어도 괜찮습니다.'},
+  {c:'warmup',t:'지금 이 그룹코칭을 색깔로 표현한다면?\n이유도 한 마디로.',tip:'정답 없이 가볍게. 웃음이 나오면 성공.'},
+  {c:'warmup',t:'오늘 이 자리에서 꺼내놓고 싶은 것이 있다면?',tip:'이 답변이 오늘 세션의 방향을 바꿀 수도 있습니다.'},
+  {c:'warmup',t:'최근 한 주를 날씨로 표현하면?',tip:'짧고 가볍게. 분위기 파악에 좋은 질문입니다.'},
+  {c:'jira',t:'"누가 무엇을 하고 있는지" 몰라서\n가장 아팠던 순간은?',tip:'사례가 구체적일수록 대화가 깊어집니다. 조용히 기다려 주세요.'},
+  {c:'jira',t:'Jira를 쓰면서 "이건 진짜 편하다" 싶었던\n경험이 있다면?',tip:'"없다"는 답변 자체도 좋은 재료입니다.'},
+  {c:'jira',t:'지금 실행 현황을 확인하는 데\n몇 단계가 걸리나요?',tip:'현재 구조를 화이트보드에 함께 그려보세요.'},
+  {c:'jira',t:'구성원이 Jira에 저항하는 가장 큰 이유,\n솔직히 어떻게 생각하세요?',tip:'담당님 본인의 저항 이유이기도 한지 함께 탐색해보세요.'},
+  {c:'jira',t:'보고서를 없애도 된다면,\n가장 먼저 없애고 싶은 보고서는?',tip:'구체적인 이름이 나올수록 다음 대화로 이어지기 좋습니다.'},
+  {c:'jira',t:'"멘션 한 번"이 조직을 움직인다고\n생각하세요? 경험이 있다면?',tip:'작은 행동의 신호 효과를 탐색하는 질문입니다.'},
+  {c:'jira',t:'이번 주 미션을 하면서 어떤 느낌이었나요?\n예상과 달랐던 점은?',tip:'2회차 이후 체크인에 활용하세요.'},
+  {c:'leader',t:'담당으로서 가장 "나답지 않다"고\n느끼는 순간은 언제인가요?',tip:'심리적 안전감이 충분히 형성된 이후 쓰세요.'},
+  {c:'leader',t:'"리더가 없어도 돌아가는 팀"을 만들기 위해\n지금 가장 필요한 것은?',tip:'자율 실행 설계자 역량과 연결되는 질문입니다.'},
+  {c:'leader',t:'구성원에게 "맥락"을 설명하는 데\n가장 많은 시간을 쓰는 상황은?',tip:'Initiative-Epic-Task 연결 필요성으로 자연스럽게 이어집니다.'},
+  {c:'leader',t:'팀장에게 가장 많이 하는 말 Top 3는?\n그 말이 없어지면 좋겠나요?',tip:'반복 커뮤니케이션 비용을 실감하게 하는 질문입니다.'},
+  {c:'peer',t:'이 그룹에서 오늘 가장 공감된 한 마디는?',tip:'회차 중반 또는 클로징 직전에 사용하기 좋습니다.'},
+  {c:'peer',t:'옆 분이 말씀하신 것 중\n"나도 그런데"라고 느낀 게 있었나요?',tip:'연대감 형성에 효과적입니다.'},
+  {c:'peer',t:'이 자리에서 아직 꺼내지 못한 이야기가 있다면?',tip:'세션 후반부에 사용하세요. 침묵이 길어도 기다려주세요.'},
+  {c:'peer',t:'다음 회차 전까지 옆 분과\n딱 하나 약속한다면?',tip:'페어 미션 만들기에 좋은 질문입니다.'},
+  {c:'reflection',t:'오늘 이 자리에 오기 전과 지금,\n달라진 게 있다면?',tip:'클로징 체크아웃으로 최적입니다.'},
+  {c:'reflection',t:'오늘 대화 중 가장 불편했던 순간은\n언제였나요?',tip:'불편함이 나오면 성공입니다. 다음 세션 설계에 반영하세요.'},
+  {c:'reflection',t:'지난 회차 미션, 못 했다면\n왜 못 했는지 솔직하게?',tip:'"못 했다"는 답변이 가장 중요한 데이터입니다. 비판 없이 받으세요.'},
+  {c:'reflection',t:'이 그룹코칭이 끝났을 때\n"이것 하나만 남아도 성공"이라고 생각하는 것은?',tip:'1회차 말미나 최종 회차에 활용하세요.'},
+  {c:'bbang',bm:'꽝!',bt:'5초 침묵해보세요. 침묵도 코칭입니다.'},
+  {c:'bbang',bm:'꽝!',bt:'커피 한 모금 타이밍! 잠깐 쉬어가세요.'},
+  {c:'bbang',bm:'꽝!',bt:'지금 이 분위기를 한 단어로 표현한다면?'}
+];
+
+/* STATE */
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1};
+
+/* SCREEN TRANSITION */
+var screenIds=['home','setup','names','topic','gacha','admin'];
+function showScreen(id){
+  clearTimer();
+  screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
+  var t=document.getElementById('screen-'+id);
+  t.style.display='flex';void t.offsetHeight;t.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n,i){
+    n.classList.toggle('active',(id==='home'&&i===0)||(id==='gacha'&&i===1));
+  });
+  if(id==='setup')renderPlayerIcons();
+  if(id==='names')renderNameInputs();
+  if(id==='admin')renderAdminPanel();
+}
+
+/* PLAYER SETUP — max 7 */
+function changePlayerCount(d){
+  state.playerCount=Math.max(2,Math.min(7,state.playerCount+d));
+  document.getElementById('playerNum').textContent=String(state.playerCount).padStart(2,'0');
+  renderPlayerIcons();
+}
+function renderPlayerIcons(){
+  var h='';
+  for(var i=0;i<7;i++) h+='<span class="material-symbols-outlined'+(i<state.playerCount?'':' dim')+'">person</span>';
+  document.getElementById('playerIcons').innerHTML=h;
+}
+
+/* PLAYER NAMES */
+function renderNameInputs(){
+  var el=document.getElementById('namesList'),h='';
+  for(var i=0;i<state.playerCount;i++){
+    var val=state.playerNames[i]||'';
+    h+='<div class="name-row">';
+    h+='<div class="name-num">'+(i+1)+'</div>';
+    h+='<input class="name-input" type="text" placeholder="플레이어 '+(i+1)+' 이름" maxlength="10" value="'+escapeHtml(val)+'" data-idx="'+i+'">';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function saveNames(){
+  var inputs=document.querySelectorAll('#namesList .name-input');
+  state.playerNames=[];
+  for(var i=0;i<inputs.length;i++){
+    var v=inputs[i].value.trim();
+    state.playerNames.push(v||'플레이어 '+(i+1));
+  }
+  showScreen('topic');
+}
+function currentPlayerName(){
+  return state.playerNames[state.currentPlayer-1]||('플레이어 '+state.currentPlayer);
+}
+
+/* TOPIC SELECTION */
+var topicKeys=['warmup','jira','leader','peer','reflection'];
+function renderTopics(){
+  var g=document.getElementById('topicGrid'),h='';
+  topicKeys.forEach(function(k){
+    var c=cats[k];
+    h+='<div class="topic-card" data-topic="'+k+'" onclick="selectTopic(\''+k+'\')">';
+    h+='<span class="material-symbols-outlined">'+c.icon+'</span>';
+    h+='<div><div class="topic-card-label">'+c.e+' '+c.l+'</div><div class="topic-card-sub">'+c.en+'</div></div></div>';
+  });
+  g.innerHTML=h;
+}
+function selectTopic(k){
+  state.selectedTopic=k;
+  document.querySelectorAll('.topic-card').forEach(function(el){el.classList.toggle('selected',el.getAttribute('data-topic')===k)});
+  var b=document.getElementById('btnTopicNext');b.style.opacity='1';b.style.pointerEvents='auto';
+}
+
+/* ===== SLOT MACHINE ===== */
+var slotSymbols=['❓','🎲','⚡','💎','🔥','🎯','🃏','✨','🎰','💥'];
+var slotRunning=false;
+var slotCallback=null;
+
+function runSlot(callback){
+  if(slotRunning)return;
+  slotRunning=true;
+  slotCallback=callback;
+  var overlay=document.getElementById('slotOverlay');
+  var result=document.getElementById('slotResult');
+  result.classList.remove('show');
+  overlay.classList.add('active');
+  // show topic
+  if(state.selectedTopic){
+    var c=cats[state.selectedTopic];
+    document.getElementById('slotTopic').textContent=c.e+' '+c.l;
+  }
+  // build strips — each reel gets 20 random items + final matching symbol
+  var finalSymbol=cats[state.selectedTopic]?cats[state.selectedTopic].e:'🎲';
+  for(var r=0;r<3;r++){
+    var strip=document.getElementById('strip'+r);
+    var items='';
+    var count=20+r*5; // stagger stop times
+    for(var i=0;i<count;i++){
+      items+='<div class="slot-item">'+slotSymbols[Math.floor(Math.random()*slotSymbols.length)]+'</div>';
+    }
+    items+='<div class="slot-item">'+finalSymbol+'</div>';
+    strip.innerHTML=items;
+    strip.style.transition='none';
+    strip.style.transform='translateY(0)';
+  }
+  // start spinning
+  setTimeout(function(){
+    for(var r=0;r<3;r++){
+      var strip=document.getElementById('strip'+r);
+      var count=20+r*5;
+      var totalH=count*100; // each item 100px
+      strip.style.transition='transform '+(1.5+r*0.5)+'s cubic-bezier(0.2,0.8,0.3,1)';
+      strip.style.transform='translateY(-'+totalH+'px)';
+    }
+  },50);
+  // after last reel stops
+  var totalTime=1500+2*500+400;
+  setTimeout(function(){
+    result.textContent='MATCHED!';
+    result.classList.add('show');
+  },totalTime-200);
+  setTimeout(function(){
+    overlay.classList.remove('active');
+    slotRunning=false;
+    if(slotCallback)slotCallback();
+  },totalTime+400);
+}
+
+/* Topic → Slot → Gacha */
+function startSlotFromTopic(){
+  if(!state.selectedTopic)return;
+  state.currentPlayer=1;
+  pickQuestion();
+  runSlot(function(){
+    showScreen('gacha');
+    renderGacha();
+  });
+}
+
+/* RE-DRAW: Slot overlay on gacha, then swap question */
+function reDraw(){
+  clearTimer();
+  pickQuestion();
+  runSlot(function(){
+    renderGacha();
+    startTimer();
+  });
+}
+
+/* Pick random question */
+function pickQuestion(){
+  var bbangPool=qs.filter(function(q){return q.c==='bbang'});
+  if(bbangPool.length&&Math.random()*100<state.bbangPct){
+    var idx=Math.floor(Math.random()*bbangPool.length);
+    state.currentQuestion=bbangPool[idx];
+    return;
+  }
+  var pool=qs.filter(function(q){return q.c===state.selectedTopic});
+  if(!pool.length)return;
+  var idx2,tries=0;
+  do{idx2=Math.floor(Math.random()*pool.length);tries++}
+  while(idx2===state.lastIdx&&pool.length>1&&tries<20);
+  state.lastIdx=idx2;
+  state.currentQuestion=pool[idx2];
+}
+
+/* GACHA RENDER */
+function renderGachaTabs(){
+  var h='',all=['warmup','jira','leader','peer','reflection','bbang'];
+  all.forEach(function(k){
+    var c=cats[k];
+    var on=k===state.selectedTopic||(state.currentQuestion&&state.currentQuestion.c===k);
+    h+='<span class="gacha-tab'+(on?' active':'')+'">'+c.e+' '+c.l+'</span>';
+  });
+  document.getElementById('gachaTabs').innerHTML=h;
+}
+function renderGacha(){
+  renderGachaTabs();
+  var q=state.currentQuestion;if(!q)return;
+  var cat=cats[q.c],a=document.getElementById('questionArea');
+  var h='<div class="question-card"><span class="q-new">NEW QUESTION</span>';
+  h+='<div class="q-badge"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+cat.c+'"></span> '+cat.e+' '+cat.l+'</div>';
+  if(q.c==='bbang'){
+    h+='<div class="q-bbang-emoji">🎊</div><div class="q-bbang-text">'+escapeHtml(q.bm)+'</div>';
+    h+='<div class="q-tip"><div class="q-tip-label"><span class="material-symbols-outlined">lightbulb</span>FACILITATOR TIP</div>'+escapeHtml(q.bt)+'</div>';
+  }else{
+    h+='<div class="q-text">'+escapeHtml(q.t).replace(/\n/g,'<br>')+'</div>';
+    if(q.tip) h+='<div class="q-tip" style="border-left-color:'+cat.c+'"><div class="q-tip-label"><span class="material-symbols-outlined">lightbulb</span>FACILITATOR TIP</div>'+escapeHtml(q.tip)+'</div>';
+  }
+  h+='</div>';
+  a.innerHTML=h;
+  startTimer();
+}
+
+/* TIMER */
+function startTimer(){
+  clearTimer();
+  state.timerSeconds=state.timerDefault;
+  renderPlayerTurn();
+  updateTimerDisplay();
+  startNudgeTimer();
+  state.timer=setInterval(function(){
+    state.timerSeconds--;
+    updateTimerDisplay();
+    if(state.timerSeconds<=0){
+      clearTimer();
+      setTimeout(nextTurn,1500);
+    }
+  },1000);
+}
+function clearTimer(){if(state.timer){clearInterval(state.timer);state.timer=null}clearNudgeTimer()}
+function resetTimer(){startTimer()}
+function nextTurn(){
+  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
+  var el=document.getElementById('playerTurn');
+  el.classList.remove('next-anim');
+  void el.offsetHeight;
+  el.classList.add('next-anim');
+  startTimer();
+}
+function renderPlayerTurn(){
+  var el=document.getElementById('playerTurn');
+  if(!el)return;
+  var name=currentPlayerName();
+  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'</span> 차례입니다';
+}
+var nudgeMessages=[
+  '좋은 이야기 나오고 있어요!','조금 더 깊이 들어가볼까요?',
+  '다른 분도 한마디 해볼까요?','핵심을 한 문장으로 정리해보세요!',
+  '좋아요, 계속 가봅시다!','지금 이 순간에 집중!',
+  '솔직한 이야기가 최고입니다','잠깐, 한 번 더 생각해볼까요?'
+];
+var nudgeTimer=null;
+function showNudge(msg){
+  var el=document.getElementById('nudgeToast');
+  el.textContent=msg;
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show')},2000);
+}
+function startNudgeTimer(){
+  clearNudgeTimer();
+  var elapsed=0;
+  nudgeTimer=setInterval(function(){
+    elapsed++;
+    if(elapsed%20===0){
+      showNudge(nudgeMessages[Math.floor(Math.random()*nudgeMessages.length)]);
+    }
+  },1000);
+}
+function clearNudgeTimer(){if(nudgeTimer){clearInterval(nudgeTimer);nudgeTimer=null}}
+function updateTimerDisplay(){
+  var el=document.getElementById('timerDisplay'),lb=document.getElementById('timerLabel'),s=state.timerSeconds;
+  el.textContent=s;el.classList.remove('hurry','timeup');lb.classList.remove('hurry-label');
+  el.style.color='';
+  if(s<=0){el.textContent='0';el.classList.add('timeup');lb.textContent='NEXT TURN...';lb.classList.add('hurry-label')}
+  else if(s<=10){el.classList.add('hurry');lb.textContent='HURRY!';lb.classList.add('hurry-label')}
+  else if(s<=30){el.style.color='var(--secondary)';lb.textContent='TIME REMAINING'}
+  else{lb.textContent='TIME REMAINING'}
+}
+
+/* ===== SUPABASE CRUD ===== */
+// assign _id to hardcoded questions as fallback
+for(var _i=0;_i<qs.length;_i++){qs[_i]._id=_i+1}
+var hardcodedQs=qs.slice();
+
+function escapeHtml(s){
+  if(!s)return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function rowToQ(r){
+  var q={c:r.category,_id:r.id};
+  if(r.category==='bbang'){q.bm=r.bbang_msg||'꽝!';q.bt=r.bbang_tip||''}
+  else{q.t=r.text||'';q.tip=r.tip||''}
+  return q;
+}
+function qToRow(q){
+  var r={category:q.c};
+  if(q.c==='bbang'){r.bbang_msg=q.bm;r.bbang_tip=q.bt;r.text=null;r.tip=null}
+  else{r.text=q.t;r.tip=q.tip;r.bbang_msg=null;r.bbang_tip=null}
+  return r;
+}
+
+function loadQuestions(cb){
+  if(!sb){cb(false);return}
+  sb.from('questions').select('*').order('sort_order').order('id').then(function(res){
+    if(res.error||!res.data||!res.data.length){cb(false);return}
+    qs=res.data.map(rowToQ);
+    dbReady=true;
+    cb(true);
+  }).catch(function(){cb(false)});
+}
+
+function createQuestion(q,cb){
+  if(!sb||!adminSession){cb(false);return}
+  var r=qToRow(q);
+  sb.from('questions').insert(r).select().single().then(function(res){
+    if(res.error){cb(false);return}
+    q._id=res.data.id;
+    qs.push(q);
+    cb(true);
+  }).catch(function(){cb(false)});
+}
+
+function updateQuestion(id,q,cb){
+  if(!sb||!adminSession){cb(false);return}
+  var r=qToRow(q);
+  r.updated_at=new Date().toISOString();
+  sb.from('questions').update(r).eq('id',id).then(function(res){
+    if(res.error){cb(false);return}
+    for(var i=0;i<qs.length;i++){if(qs[i]._id===id){qs[i]=q;qs[i]._id=id;break}}
+    cb(true);
+  }).catch(function(){cb(false)});
+}
+
+function deleteQuestion(id,cb){
+  if(!sb||!adminSession){cb(false);return}
+  sb.from('questions').delete().eq('id',id).then(function(res){
+    if(res.error){cb(false);return}
+    qs=qs.filter(function(q){return q._id!==id});
+    cb(true);
+  }).catch(function(){cb(false)});
+}
+
+/* ===== ADMIN PANEL ===== */
+var adminCat='warmup';
+var adminEditMode=null; // null | 'add' | 'edit'
+
+function showAdminStatus(msg,type){
+  var el=document.getElementById('adminStatus');
+  el.className='admin-status '+(type||'');
+  el.textContent=msg;
+  if(msg)setTimeout(function(){el.textContent='';el.className='admin-status'},3000);
+}
+
+function adminLogin(){
+  var pw=document.getElementById('adminPw').value;
+  if(!pw){showAdminStatus('비밀번호를 입력하세요','err');return}
+  if(pw!==ADMIN_PW){showAdminStatus('비밀번호가 틀렸습니다','err');return}
+  adminSession=true;
+  document.getElementById('adminAuth').style.display='none';
+  document.getElementById('btnAddQ').style.display='flex';
+  showAdminStatus('로그인 성공','ok');
+  renderAdminPanel();
+}
+
+function renderAdminPanel(){
+  renderAdminCatTabs();
+  renderAdminQuestions();
+}
+
+function renderAdminCatTabs(){
+  var h='',all=['warmup','jira','leader','peer','reflection','bbang'];
+  all.forEach(function(k){
+    var c=cats[k];
+    var on=k===adminCat;
+    h+='<span class="gacha-tab'+(on?' active':'')+'" onclick="switchAdminCat(\''+k+'\')">'+c.e+' '+c.l+'</span>';
+  });
+  document.getElementById('adminCatTabs').innerHTML=h;
+}
+
+function switchAdminCat(k){
+  adminCat=k;
+  cancelEdit();
+  renderAdminPanel();
+}
+
+function renderAdminQuestions(){
+  var list=document.getElementById('adminQuestionList');
+  var filtered=qs.filter(function(q){return q.c===adminCat});
+  document.getElementById('adminCount').textContent=cats[adminCat].e+' '+filtered.length+'개 질문';
+  // Bbang probability control
+  var pctBox=document.getElementById('bbangPctBox');
+  if(adminCat==='bbang'){
+    if(!pctBox){
+      pctBox=document.createElement('div');
+      pctBox.id='bbangPctBox';
+      pctBox.className='bbang-pct-box';
+      var btnAddQ=document.getElementById('btnAddQ');
+      btnAddQ.parentNode.insertBefore(pctBox,btnAddQ);
+    }
+    pctBox.innerHTML='<div class="bbang-pct-label"><span class="material-symbols-outlined" style="font-size:18px;color:var(--primary-light)">tune</span>꽝 출현 확률</div>'
+      +'<div class="bbang-pct-row">'
+      +'<input type="range" min="0" max="30" value="'+state.bbangPct+'" oninput="updateBbangPct(this.value)">'
+      +'<span class="bbang-pct-val" id="bbangPctVal">'+state.bbangPct+'%</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--on-surface-dim)">각 카테고리에서 카드 뽑기 시 꽝이 나올 확률</div>';
+    pctBox.style.display='flex';
+  }else if(pctBox){
+    pctBox.style.display='none';
+  }
+  if(!filtered.length){
+    list.innerHTML='<div style="text-align:center;color:var(--on-surface-dim);padding:24px;font-size:13px">이 카테고리에 질문이 없습니다</div>';
+    return;
+  }
+  var h='';
+  filtered.forEach(function(q,i){
+    var display=q.c==='bbang'?escapeHtml(q.bm):escapeHtml(q.t||'').substring(0,80);
+    var tipText=q.c==='bbang'?escapeHtml(q.bt):escapeHtml(q.tip||'');
+    h+='<div class="admin-q-item">';
+    h+='<div class="admin-q-item-num">'+(i+1)+'</div>';
+    h+='<div style="flex:1"><div class="admin-q-item-text">'+display+'</div>';
+    if(tipText) h+='<div class="admin-q-item-tip">💡 '+tipText.substring(0,60)+(tipText.length>60?'...':'')+'</div>';
+    h+='</div>';
+    if(adminSession){
+      h+='<div class="admin-q-actions">';
+      h+='<button onclick="openEditForm('+q._id+')" title="수정"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button>';
+      h+='<button class="del" onclick="confirmDelete('+q._id+')" title="삭제"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>';
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  list.innerHTML=h;
+}
+
+function toggleBbangFields(){
+  var isBbang=document.getElementById('editQCat').value==='bbang';
+  document.getElementById('normalFields').style.display=isBbang?'none':'block';
+  document.getElementById('bbangFields').style.display=isBbang?'block':'none';
+}
+
+function openAddForm(){
+  adminEditMode='add';
+  document.getElementById('adminFormTitle').textContent='ADD QUESTION';
+  document.getElementById('editQId').value='';
+  document.getElementById('editQCat').value=adminCat;
+  document.getElementById('editQText').value='';
+  document.getElementById('editQTip').value='';
+  document.getElementById('editQBbangMsg').value='';
+  document.getElementById('editQBbangTip').value='';
+  toggleBbangFields();
+  document.getElementById('adminForm').style.display='flex';
+  document.getElementById('btnAddQ').style.display='none';
+  document.getElementById('adminForm').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function openEditForm(id){
+  var q=null;
+  for(var i=0;i<qs.length;i++){if(qs[i]._id===id){q=qs[i];break}}
+  if(!q)return;
+  adminEditMode='edit';
+  document.getElementById('adminFormTitle').textContent='EDIT QUESTION';
+  document.getElementById('editQId').value=id;
+  document.getElementById('editQCat').value=q.c;
+  if(q.c==='bbang'){
+    document.getElementById('editQBbangMsg').value=q.bm||'';
+    document.getElementById('editQBbangTip').value=q.bt||'';
+    document.getElementById('editQText').value='';
+    document.getElementById('editQTip').value='';
+  }else{
+    document.getElementById('editQText').value=q.t||'';
+    document.getElementById('editQTip').value=q.tip||'';
+    document.getElementById('editQBbangMsg').value='';
+    document.getElementById('editQBbangTip').value='';
+  }
+  toggleBbangFields();
+  document.getElementById('adminForm').style.display='flex';
+  document.getElementById('btnAddQ').style.display='none';
+  document.getElementById('adminForm').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function cancelEdit(){
+  adminEditMode=null;
+  document.getElementById('adminForm').style.display='none';
+  if(adminSession) document.getElementById('btnAddQ').style.display='flex';
+}
+
+function saveQuestion(){
+  var cat=document.getElementById('editQCat').value;
+  var q={c:cat};
+  if(cat==='bbang'){
+    q.bm=document.getElementById('editQBbangMsg').value.trim()||'꽝!';
+    q.bt=document.getElementById('editQBbangTip').value.trim();
+    if(!q.bt){showAdminStatus('꽝 팁을 입력하세요','err');return}
+  }else{
+    q.t=document.getElementById('editQText').value.trim();
+    q.tip=document.getElementById('editQTip').value.trim();
+    if(!q.t){showAdminStatus('질문 텍스트를 입력하세요','err');return}
+  }
+  if(adminEditMode==='add'){
+    createQuestion(q,function(ok){
+      if(ok){showAdminStatus('질문 추가 완료','ok');adminCat=cat;cancelEdit();renderAdminPanel()}
+      else showAdminStatus('저장 실패','err');
+    });
+  }else if(adminEditMode==='edit'){
+    var id=parseInt(document.getElementById('editQId').value);
+    updateQuestion(id,q,function(ok){
+      if(ok){showAdminStatus('수정 완료','ok');adminCat=cat;cancelEdit();renderAdminPanel()}
+      else showAdminStatus('수정 실패','err');
+    });
+  }
+}
+
+function updateBbangPct(val){
+  state.bbangPct=parseInt(val)||0;
+  var el=document.getElementById('bbangPctVal');
+  if(el) el.textContent=state.bbangPct+'%';
+}
+
+function confirmDelete(id){
+  if(!confirm('이 질문을 삭제하시겠습니까?'))return;
+  deleteQuestion(id,function(ok){
+    if(ok){showAdminStatus('삭제 완료','ok');renderAdminPanel()}
+    else showAdminStatus('삭제 실패','err');
+  });
+}
+
+/* ===== INIT ===== */
+function initApp(){
+  renderTopics();
+  renderPlayerIcons();
+  loadQuestions(function(ok){
+    if(ok){console.log('DB loaded: '+qs.length+' questions')}
+    else{qs=hardcodedQs.slice();console.log('Offline: using built-in questions')}
+  });
+}
+initApp();
+</script>
+</body>
+</html>
