@@ -255,17 +255,42 @@ body::after{
 .player-turn-num{color:var(--primary-light);font-size:18px}
 .player-turn.next-anim{animation:turnPop .5s ease}
 @keyframes turnPop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+/* STAGING */
+.staging-topic{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:20px;
+  background:var(--surface);border:2px solid var(--outline-dim);
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;
+  color:var(--on-surface-dim);margin-bottom:12px;
+}
+.staging-visual{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;width:100%;max-width:340px;gap:8px;padding:24px 0;
+}
+.staging-emoji{font-size:64px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.staging-msg{
+  font-family:'Black Han Sans',sans-serif;font-size:20px;
+  color:var(--on-surface);text-align:center;line-height:1.5;
+}
+.staging-hint{font-size:12px;color:var(--on-surface-dim);text-align:center;margin-top:4px}
+.staging-actions{
+  display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:24px;
+}
+.staging-actions .btn-row{display:flex;gap:10px}
+.staging-actions .btn-row>*{flex:1}
+
 .nudge-toast{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);
-  z-index:150;padding:16px 28px;border-radius:16px;
-  background:rgba(26,26,58,0.95);border:3px solid var(--primary);
-  box-shadow:0 0 30px rgba(255,0,127,0.4);
-  font-family:'Black Han Sans',sans-serif;font-size:22px;
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);
+  z-index:150;padding:10px 20px;border-radius:20px;
+  background:rgba(26,26,58,0.92);border:2px solid var(--primary);
+  box-shadow:0 0 20px rgba(255,0,127,0.3);
+  font-family:'Black Han Sans',sans-serif;font-size:15px;
   color:var(--primary-light);text-align:center;white-space:nowrap;
   opacity:0;pointer-events:none;
   transition:opacity .3s,transform .3s;
 }
-.nudge-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.nudge-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .gacha-actions{display:flex;gap:10px;margin-top:4px;width:100%;max-width:360px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
 
@@ -488,6 +513,32 @@ body::after{
   </div>
 </section>
 
+<!-- SCREEN 3.5: STAGING -->
+<section id="screen-staging" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
+    </div>
+    <div class="staging-topic" id="stagingTopic"></div>
+    <div class="player-turn" id="stagingPlayerTurn"></div>
+    <div class="timer-label" id="stagingTimerLabel">TIME REMAINING</div>
+    <div class="timer-section"><div class="timer-display" id="stagingTimerDisplay">60</div></div>
+    <div class="staging-visual">
+      <div class="staging-emoji">🎤</div>
+      <div class="staging-msg">대화가 진행 중입니다</div>
+      <div class="staging-hint">부스팅이 필요할 때 카드를 뽑아보세요</div>
+    </div>
+    <div class="staging-actions">
+      <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="nextTurnStaging()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
+        <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- SCREEN 4: GACHA -->
 <section id="screen-gacha" class="screen">
   <div class="content">
@@ -496,14 +547,10 @@ body::after{
       <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
     </div>
     <div class="gacha-tabs" id="gachaTabs"></div>
-    <div class="player-turn" id="playerTurn"></div>
-    <div class="timer-label" id="timerLabel">TIME REMAINING</div>
-    <div class="timer-section"><div class="timer-display" id="timerDisplay">60</div></div>
     <div id="questionArea"></div>
     <div class="gacha-actions" style="margin-top:16px">
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
-      <button class="btn-ghost" onclick="nextTurn()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
-      <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
+      <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
     </div>
   </div>
 </section>
@@ -592,7 +639,7 @@ body::after{
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</div>
-  <div class="nav-item" onclick="if(state.selectedTopic)reDraw();else showScreen('topic')"><span class="material-symbols-outlined">sports_esports</span>PLAY</div>
+  <div class="nav-item" onclick="if(state.selectedTopic)showScreen('staging');else showScreen('topic')"><span class="material-symbols-outlined">sports_esports</span>PLAY</div>
 </nav>
 
 <script>
@@ -648,17 +695,18 @@ var qs=[
 var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1};
 
 /* SCREEN TRANSITION */
-var screenIds=['home','setup','names','topic','gacha','admin'];
+var screenIds=['home','setup','names','topic','staging','gacha','admin'];
 function showScreen(id){
-  clearTimer();
+  if(id!=='staging'&&id!=='gacha')clearTimer();
   screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
   var t=document.getElementById('screen-'+id);
   t.style.display='flex';void t.offsetHeight;t.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(function(n,i){
-    n.classList.toggle('active',(id==='home'&&i===0)||(id==='gacha'&&i===1));
+    n.classList.toggle('active',(id==='home'&&i===0)||((id==='gacha'||id==='staging')&&i===1));
   });
   if(id==='setup')renderPlayerIcons();
   if(id==='names')renderNameInputs();
+  if(id==='staging')renderStaging();
   if(id==='admin')renderAdminPanel();
 }
 
@@ -772,10 +820,61 @@ function runSlot(callback){
   },totalTime+400);
 }
 
-/* Topic → Slot → Gacha */
+/* Topic → Staging */
 function startSlotFromTopic(){
   if(!state.selectedTopic)return;
   state.currentPlayer=1;
+  showScreen('staging');
+  startStagingTimer();
+}
+
+/* Staging functions */
+function renderStaging(){
+  var c=cats[state.selectedTopic];
+  document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l;
+  renderStagingTurn();
+  syncStagingTimer();
+}
+function renderStagingTurn(){
+  var el=document.getElementById('stagingPlayerTurn');
+  if(!el)return;
+  var name=currentPlayerName();
+  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'님</span> 차례입니다';
+}
+function startStagingTimer(){
+  clearTimer();
+  state.timerSeconds=state.timerDefault;
+  renderStagingTurn();
+  syncStagingTimer();
+  startNudgeTimer();
+  state.timer=setInterval(function(){
+    state.timerSeconds--;
+    syncStagingTimer();
+    if(state.timerSeconds<=0){
+      clearTimer();
+      setTimeout(nextTurnStaging,1500);
+    }
+  },1000);
+}
+function syncStagingTimer(){
+  var el=document.getElementById('stagingTimerDisplay');
+  var lb=document.getElementById('stagingTimerLabel');
+  var s=state.timerSeconds;
+  el.textContent=s;el.classList.remove('hurry','timeup');lb.classList.remove('hurry-label');
+  el.style.color='';
+  if(s<=0){el.textContent='0';el.classList.add('timeup');lb.textContent='NEXT TURN...';lb.classList.add('hurry-label')}
+  else if(s<=10){el.classList.add('hurry');lb.textContent='HURRY!';lb.classList.add('hurry-label')}
+  else if(s<=30){el.style.color='var(--secondary)';lb.textContent='TIME REMAINING'}
+  else{lb.textContent='TIME REMAINING'}
+}
+function nextTurnStaging(){
+  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
+  var el=document.getElementById('stagingPlayerTurn');
+  if(el){el.classList.remove('next-anim');void el.offsetHeight;el.classList.add('next-anim')}
+  startStagingTimer();
+}
+function drawFromStaging(){
+  clearTimer();
   pickQuestion();
   runSlot(function(){
     showScreen('gacha');
@@ -783,13 +882,11 @@ function startSlotFromTopic(){
   });
 }
 
-/* RE-DRAW: Slot overlay on gacha, then swap question */
+/* RE-DRAW from gacha */
 function reDraw(){
-  clearTimer();
   pickQuestion();
   runSlot(function(){
     renderGacha();
-    startTimer();
   });
 }
 
@@ -812,13 +909,10 @@ function pickQuestion(){
 
 /* GACHA RENDER */
 function renderGachaTabs(){
-  var h='',all=['warmup','jira','leader','peer','reflection','bbang'];
-  all.forEach(function(k){
-    var c=cats[k];
-    var on=k===state.selectedTopic||(state.currentQuestion&&state.currentQuestion.c===k);
-    h+='<span class="gacha-tab'+(on?' active':'')+'">'+c.e+' '+c.l+'</span>';
-  });
-  document.getElementById('gachaTabs').innerHTML=h;
+  var q=state.currentQuestion;
+  if(!q)return;
+  var c=cats[q.c];
+  document.getElementById('gachaTabs').innerHTML='<span class="gacha-tab active">'+c.e+' '+c.l+'</span>';
 }
 function renderGacha(){
   renderGachaTabs();
@@ -835,10 +929,14 @@ function renderGacha(){
   }
   h+='</div>';
   a.innerHTML=h;
-  startTimer();
 }
 
-/* TIMER */
+function backToStaging(){
+  showScreen('staging');
+  startStagingTimer();
+}
+
+/* TIMER (legacy for RE-DRAW) */
 function startTimer(){
   clearTimer();
   state.timerSeconds=state.timerDefault;
@@ -868,7 +966,7 @@ function renderPlayerTurn(){
   var el=document.getElementById('playerTurn');
   if(!el)return;
   var name=currentPlayerName();
-  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'</span> 차례입니다';
+  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'님</span> 차례입니다';
 }
 var nudgeMessages=[
   '좋은 이야기 나오고 있어요!','조금 더 깊이 들어가볼까요?',
