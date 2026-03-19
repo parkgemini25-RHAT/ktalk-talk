@@ -254,17 +254,6 @@ body::after{
 .staging-actions{
   display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;margin-top:32px;
 }
-.gacha-timer-row{
-  display:flex;align-items:center;justify-content:center;gap:18px;
-  width:100%;max-width:520px;margin-top:14px;
-}
-.gacha-timer{
-  font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;
-  color:var(--secondary);letter-spacing:2px;transition:color .3s;min-width:70px;text-align:center;
-}
-.gacha-timer.hurry{color:var(--primary);animation:gachaPulse .5s ease infinite}
-.gacha-timer.timeup{color:var(--on-surface-dim)}
-@keyframes gachaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .gacha-actions{display:flex;gap:12px;margin-top:8px;width:100%;max-width:520px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
 /* DEPTH SELECTOR */
@@ -277,17 +266,6 @@ body::after{
 .depth-btn.active[data-d="2"]{border-color:#00B4FF;color:#00B4FF;box-shadow:0 0 12px rgba(0,180,255,0.3)}
 .depth-btn.active[data-d="3"]{border-color:#C77DFF;color:#C77DFF;box-shadow:0 0 12px rgba(199,125,255,0.3)}
 .depth-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;margin-left:8px}
-/* PARTICIPANT GRID */
-.participant-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px;margin:8px 0}
-.participant-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:var(--surface);border:2px solid var(--outline-dim);font-size:13px;font-weight:600;color:var(--on-surface-dim);cursor:pointer;transition:all .2s;user-select:none}
-.participant-chip:hover{border-color:var(--secondary)}
-.participant-chip.active{border-color:var(--primary);color:var(--primary-light);box-shadow:0 0 12px rgba(255,0,127,0.3)}
-.participant-chip.quiet{border-color:var(--primary-dim,#993366)}
-.participant-chip.glow{animation:chipGlow 1s ease infinite}
-@keyframes chipGlow{0%,100%{box-shadow:0 0 8px rgba(255,0,127,0.3)}50%{box-shadow:0 0 20px rgba(255,0,127,0.7)}}
-.participant-chip .p-bar{width:24px;height:4px;border-radius:2px;background:var(--outline-dim);overflow:hidden}
-.participant-chip .p-bar-fill{height:100%;border-radius:2px;background:var(--secondary);transition:width .3s}
-.participant-chip.active .p-bar-fill{background:var(--primary-light)}
 .participation-hint{font-size:13px;color:var(--primary-light);text-align:center;min-height:20px;margin-bottom:4px}
 /* SPEAKER TRACKER */
 .speaker-tracker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px;margin:12px 0}
@@ -567,12 +545,9 @@ body::after{
       <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
     </div>
     <div class="gacha-tabs" id="gachaTabs"></div>
-    <div class="participant-grid" id="participantGrid"></div>
-    <div class="participation-hint" id="participationHint"></div>
     <div id="questionArea"></div>
-    <div class="gacha-timer-row">
-      <div class="gacha-timer" id="gachaTimer">60</div>
-    </div>
+    <div class="speaker-tracker" id="gachaSpeakerTracker"></div>
+    <div class="participation-hint" id="gachaParticipationHint"></div>
     <div class="gacha-actions" style="margin-top:12px">
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
       <button class="btn-secondary" onclick="bumpDepth()"><span class="material-symbols-outlined">arrow_upward</span>깊이+</button>
@@ -733,7 +708,8 @@ function showScreen(id){
   document.querySelectorAll('.nav-item').forEach(function(n,i){
     n.classList.toggle('active',(id==='home'&&i===0)||((id==='gacha'||id==='staging')&&i===1));
   });
-  if(id!=='staging'){clearNudgeTimer();stopSpeakTimer()}
+  if(id!=='staging')clearNudgeTimer();
+  if(id!=='staging'&&id!=='gacha')stopSpeakTimer();
   if(id==='setup')renderPlayerIcons();
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
@@ -874,11 +850,11 @@ function renderStaging(){
 }
 function fmtSec(s){var m=Math.floor(s/60);var ss=s%60;return m+':'+(ss<10?'0':'')+ss}
 function renderSpeakerTracker(){
-  var el=document.getElementById('speakerTracker');
-  if(!el)return;
   if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
   if(!state.speakingPlayers.length) state.speakingPlayers=new Array(state.playerCount).fill(false);
   var maxT=Math.max.apply(null,state.speakTime)||1;
+  var minT=Math.min.apply(null,state.speakTime);
+  var totalT=0;for(var k=0;k<state.speakTime.length;k++) totalT+=state.speakTime[k];
   var h='';
   for(var i=0;i<state.playerCount;i++){
     var name=state.playerNames[i]||('플레이어 '+(i+1));
@@ -891,7 +867,20 @@ function renderSpeakerTracker(){
     h+='<div class="s-bar"><div class="s-bar-fill" style="width:'+pct+'%"></div></div>';
     h+='</div>';
   }
-  el.innerHTML=h;
+  // render into both staging and gacha
+  var ids=['speakerTracker','gachaSpeakerTracker'];
+  for(var t=0;t<ids.length;t++){var el=document.getElementById(ids[t]);if(el)el.innerHTML=h}
+  // balance hint in gacha
+  var hintEl=document.getElementById('gachaParticipationHint');
+  if(hintEl){
+    if(totalT>30&&maxT-minT>=20){
+      var quietNames=[];
+      for(var j=0;j<state.speakTime.length;j++){
+        if(state.speakTime[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
+      }
+      hintEl.textContent='💡 '+quietNames.join(', ')+'님의 발언 시간이 적어요';
+    }else{hintEl.textContent=''}
+  }
 }
 function toggleSpeaker(idx){
   if(!state.speakingPlayers.length) state.speakingPlayers=new Array(state.playerCount).fill(false);
@@ -920,10 +909,12 @@ function startSpeakTimer(){
 function stopSpeakTimer(){
   if(state.speakTimer){clearInterval(state.speakTimer);state.speakTimer=null}
 }
-/* Keyboard shortcut: 1~7 toggles speaker on staging screen */
+/* Keyboard shortcut: 1~7 toggles speaker on staging & gacha screens */
 document.addEventListener('keydown',function(e){
-  var screen=document.getElementById('screen-staging');
-  if(!screen||!screen.classList.contains('active'))return;
+  var onStaging=document.getElementById('screen-staging');
+  var onGacha=document.getElementById('screen-gacha');
+  var active=(onStaging&&onStaging.classList.contains('active'))||(onGacha&&onGacha.classList.contains('active'));
+  if(!active)return;
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
   var num=parseInt(e.key);
   if(num>=1&&num<=state.playerCount){
@@ -933,12 +924,10 @@ document.addEventListener('keydown',function(e){
 });
 function drawFromStaging(){
   clearNudgeTimer();
-  stopSpeakTimer();
   pickQuestion();
   runSlot(function(){
     showScreen('gacha');
     renderGacha();
-    startGachaTimer();
   });
 }
 
@@ -948,67 +937,6 @@ function reDraw(){
   runSlot(function(){
     renderGacha();
   });
-}
-
-/* GACHA TIMER & PARTICIPANT SELECTION */
-function startGachaTimer(){
-  clearGachaTimer();
-  state.timerSeconds=state.timerDefault;
-  syncGachaTimer();
-  state.timer=setInterval(function(){
-    state.timerSeconds--;
-    syncGachaTimer();
-    if(state.timerSeconds<=0){
-      clearGachaTimer();
-      document.querySelectorAll('.participant-chip.quiet').forEach(function(c){c.classList.add('glow')});
-    }
-  },1000);
-}
-function clearGachaTimer(){if(state.timer){clearInterval(state.timer);state.timer=null}}
-function syncGachaTimer(){
-  var el=document.getElementById('gachaTimer');
-  if(!el)return;
-  var s=state.timerSeconds;
-  el.textContent=s;el.classList.remove('hurry','timeup');
-  if(s<=0){el.textContent='0';el.classList.add('timeup')}
-  else if(s<=10){el.classList.add('hurry')}
-  else{el.style.color=''}
-}
-function renderParticipantGrid(){
-  var el=document.getElementById('participantGrid');
-  if(!el)return;
-  if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
-  var maxT=Math.max.apply(null,state.speakTime)||1;
-  var minT=Math.min.apply(null,state.speakTime);
-  var totalT=0;for(var k=0;k<state.speakTime.length;k++)totalT+=state.speakTime[k];
-  var h='';
-  for(var i=0;i<state.playerCount;i++){
-    var name=state.playerNames[i]||('플레이어 '+(i+1));
-    var isActive=(state.currentPlayer===i+1);
-    var isQuiet=(totalT>30&&state.speakTime[i]===minT&&maxT-minT>=10);
-    var pct=Math.max(10,(state.speakTime[i]/maxT)*100);
-    h+='<div class="participant-chip'+(isActive?' active':'')+(isQuiet?' quiet':'')+'" onclick="selectParticipant('+(i+1)+')">';
-    h+='<span>'+escapeHtml(name)+' <small style="opacity:.6">'+fmtSec(state.speakTime[i])+'</small></span>';
-    h+='<div class="p-bar"><div class="p-bar-fill" style="width:'+pct+'%"></div></div>';
-    h+='</div>';
-  }
-  el.innerHTML=h;
-  var hintEl=document.getElementById('participationHint');
-  if(hintEl){
-    if(totalT>30&&maxT-minT>=10){
-      var quietNames=[];
-      for(var j=0;j<state.speakTime.length;j++){
-        if(state.speakTime[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
-      }
-      hintEl.textContent='💡 '+quietNames.join(', ')+'님의 발언 시간이 적어요';
-    }else{hintEl.textContent=''}
-  }
-}
-function selectParticipant(idx){
-  state.currentPlayer=idx;
-  document.querySelectorAll('.participant-chip.glow').forEach(function(c){c.classList.remove('glow')});
-  renderParticipantGrid();
-  startGachaTimer();
 }
 
 /* Pick random question */
@@ -1037,7 +965,7 @@ function renderGachaTabs(){
 }
 function renderGacha(){
   renderGachaTabs();
-  renderParticipantGrid();
+  renderSpeakerTracker();
   var q=state.currentQuestion;if(!q)return;
   var cat=cats[q.c],a=document.getElementById('questionArea');
   var h='<div class="question-card"><span class="q-new">NEW QUESTION</span>';
@@ -1054,9 +982,7 @@ function renderGacha(){
 }
 
 function backToStaging(){
-  clearGachaTimer();
   showScreen('staging');
-  if(anySpeaking()) startSpeakTimer();
 }
 
 /* SMART NUDGE SYSTEM */
