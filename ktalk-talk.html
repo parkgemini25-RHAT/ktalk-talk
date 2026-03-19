@@ -1062,7 +1062,7 @@ function renderSpeakerTracker(){
   // balance hint in gacha
   var hintEl=document.getElementById('gachaParticipationHint');
   if(hintEl){
-    if(totalT>30&&maxT-minT>=20){
+    if(totalT>60&&maxT-minT>=60){
       var quietNames=[];
       for(var j=0;j<state.speakTime.length;j++){
         if(state.speakTime[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
@@ -1337,7 +1337,7 @@ function checkBalanceNudge(){
   if(total-lastBalanceNudgeAt<60) return;
   var maxT=Math.max.apply(null,state.speakTime);
   var minT=Math.min.apply(null,state.speakTime);
-  if(maxT-minT<20) return;
+  if(maxT-minT<60) return;
   var quietIdx=-1;
   for(var j=0;j<state.speakTime.length;j++){
     if(state.speakTime[j]===minT){quietIdx=j;break}
