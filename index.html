@@ -251,8 +251,12 @@ body::after{
   color:var(--on-surface);text-align:center;line-height:1.5;
 }
 .staging-hint{font-size:14px;color:var(--on-surface-dim);text-align:center;margin-top:6px}
+.staging-topic-picker{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px;margin-top:8px}
+.staging-topic-chip{padding:6px 14px;border-radius:16px;border:2px solid var(--outline-dim);background:var(--surface);font-size:13px;font-weight:600;color:var(--on-surface-dim);cursor:pointer;transition:all .2s;user-select:none}
+.staging-topic-chip:hover{border-color:var(--secondary)}
+.staging-topic-chip.active{border-color:var(--secondary);color:var(--secondary);box-shadow:0 0 10px rgba(0,240,255,0.2)}
 .staging-actions{
-  display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;margin-top:32px;
+  display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;margin-top:16px;
 }
 .gacha-actions{display:flex;gap:12px;margin-top:8px;width:100%;max-width:520px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
@@ -530,9 +534,9 @@ body::after{
     </div>
     <div class="speaker-tracker" id="speakerTracker"></div>
     <div class="staging-nudge" id="stagingNudge"></div>
+    <div class="staging-topic-picker" id="stagingTopicPicker"></div>
     <div class="staging-actions">
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
-      <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
     </div>
   </div>
 </section>
@@ -844,9 +848,33 @@ function bumpDepth(){
 function renderStaging(){
   var c=cats[state.selectedTopic];
   document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l+' <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
+  renderStagingTopicPicker();
   renderSpeakerTracker();
   lastBalanceNudgeAt=0;
   startNudgeTimer();
+}
+function renderStagingTopicPicker(){
+  var el=document.getElementById('stagingTopicPicker');
+  if(!el)return;
+  var keys=['warmup','jira','leader','peer','reflection'];
+  var h='';
+  keys.forEach(function(k){
+    var c=cats[k];
+    var on=(k===state.selectedTopic);
+    h+='<div class="staging-topic-chip'+(on?' active':'')+'" onclick="switchStagingTopic(\''+k+'\')">'+c.e+' '+c.l+'</div>';
+  });
+  // depth buttons
+  h+='<div style="display:flex;gap:4px;width:100%;justify-content:center;margin-top:4px">';
+  for(var d=1;d<=3;d++){
+    var on2=(state.depth===d);
+    h+='<div class="staging-topic-chip'+(on2?' active':'')+'" onclick="setDepth('+d+');renderStaging()" style="font-size:12px">'+depthLabels[d]+'</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+function switchStagingTopic(k){
+  state.selectedTopic=k;
+  renderStaging();
 }
 function fmtSec(s){var m=Math.floor(s/60);var ss=s%60;return m+':'+(ss<10?'0':'')+ss}
 function renderSpeakerTracker(){
@@ -1197,9 +1225,10 @@ function renderAdminQuestions(){
   filtered.forEach(function(q,i){
     var display=q.c==='bbang'?escapeHtml(q.bm):escapeHtml(q.t||'').substring(0,80);
     var tipText=q.c==='bbang'?escapeHtml(q.bt):escapeHtml(q.tip||'');
+    var depthTag=(q.c!=='bbang'&&q.d)?' <span class="depth-badge" style="font-size:10px;vertical-align:middle">'+(depthLabels[q.d]||depthLabels[1])+'</span>':'';
     h+='<div class="admin-q-item">';
     h+='<div class="admin-q-item-num">'+(i+1)+'</div>';
-    h+='<div style="flex:1"><div class="admin-q-item-text">'+display+'</div>';
+    h+='<div style="flex:1"><div class="admin-q-item-text">'+display+depthTag+'</div>';
     if(tipText) h+='<div class="admin-q-item-tip">💡 '+tipText.substring(0,60)+(tipText.length>60?'...':'')+'</div>';
     h+='</div>';
     if(adminSession){
