@@ -254,6 +254,36 @@ body::after{
 .staging-actions{
   display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:24px;
 }
+.gacha-player-turn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  color:var(--secondary);letter-spacing:1px;margin-bottom:6px;
+}
+.gacha-player-turn .material-symbols-outlined{font-size:20px}
+.gacha-player-turn .pname{color:var(--primary-light);font-size:18px}
+.gacha-player-turn.next-anim{animation:turnPop .5s ease}
+@keyframes turnPop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+.gacha-timer-row{
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  width:100%;max-width:360px;margin-top:10px;
+}
+.gacha-timer{
+  font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;
+  color:var(--secondary);letter-spacing:2px;transition:color .3s;min-width:60px;text-align:center;
+}
+.gacha-timer.hurry{color:var(--primary);animation:gachaPulse .5s ease infinite}
+.gacha-timer.timeup{color:var(--on-surface-dim)}
+@keyframes gachaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.btn-next-turn{
+  display:flex;align-items:center;gap:4px;
+  padding:8px 18px;border-radius:10px;border:2px solid var(--secondary);
+  background:transparent;color:var(--secondary);
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;transition:all .2s;
+}
+.btn-next-turn:active{background:var(--secondary);color:var(--bg)}
+.btn-next-turn.glow{border-color:var(--primary);color:var(--primary);animation:nextGlow 1s ease infinite}
+@keyframes nextGlow{0%,100%{box-shadow:0 0 8px rgba(255,0,127,0.4)}50%{box-shadow:0 0 20px rgba(255,0,127,0.8)}}
 .gacha-actions{display:flex;gap:10px;margin-top:4px;width:100%;max-width:360px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
 
@@ -504,8 +534,13 @@ body::after{
       <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
     </div>
     <div class="gacha-tabs" id="gachaTabs"></div>
+    <div class="gacha-player-turn" id="gachaPlayerTurn"></div>
     <div id="questionArea"></div>
-    <div class="gacha-actions" style="margin-top:16px">
+    <div class="gacha-timer-row">
+      <div class="gacha-timer" id="gachaTimer">60</div>
+      <button class="btn-next-turn" id="btnNextTurn" onclick="nextTurnGacha()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
+    </div>
+    <div class="gacha-actions" style="margin-top:12px">
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
       <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
     </div>
@@ -786,6 +821,7 @@ function drawFromStaging(){
   runSlot(function(){
     showScreen('gacha');
     renderGacha();
+    startGachaTimer();
   });
 }
 
@@ -795,6 +831,47 @@ function reDraw(){
   runSlot(function(){
     renderGacha();
   });
+}
+
+/* GACHA TIMER & PLAYER TURN */
+function startGachaTimer(){
+  clearGachaTimer();
+  state.timerSeconds=state.timerDefault;
+  renderGachaPlayerTurn();
+  syncGachaTimer();
+  state.timer=setInterval(function(){
+    state.timerSeconds--;
+    syncGachaTimer();
+    if(state.timerSeconds<=0){
+      clearGachaTimer();
+      var btn=document.getElementById('btnNextTurn');
+      if(btn)btn.classList.add('glow');
+    }
+  },1000);
+}
+function clearGachaTimer(){if(state.timer){clearInterval(state.timer);state.timer=null}}
+function syncGachaTimer(){
+  var el=document.getElementById('gachaTimer');
+  if(!el)return;
+  var s=state.timerSeconds;
+  el.textContent=s;el.classList.remove('hurry','timeup');
+  if(s<=0){el.textContent='0';el.classList.add('timeup')}
+  else if(s<=10){el.classList.add('hurry')}
+  else{el.style.color=''}
+}
+function renderGachaPlayerTurn(){
+  var el=document.getElementById('gachaPlayerTurn');
+  if(!el)return;
+  var name=state.playerNames[state.currentPlayer-1]||('플레이어 '+state.currentPlayer);
+  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="pname">'+escapeHtml(name)+'님</span> 차례입니다';
+}
+function nextTurnGacha(){
+  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
+  var el=document.getElementById('gachaPlayerTurn');
+  if(el){el.classList.remove('next-anim');void el.offsetHeight;el.classList.add('next-anim')}
+  var btn=document.getElementById('btnNextTurn');
+  if(btn)btn.classList.remove('glow');
+  startGachaTimer();
 }
 
 /* Pick random question */
@@ -839,6 +916,7 @@ function renderGacha(){
 }
 
 function backToStaging(){
+  clearGachaTimer();
   showScreen('staging');
 }
 
