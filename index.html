@@ -232,29 +232,6 @@ body::after{
 .q-tip-label .material-symbols-outlined{font-size:16px}
 .q-bbang-emoji{font-size:64px;text-align:center;margin:16px 0 8px}
 .q-bbang-text{font-size:20px;font-weight:700;text-align:center;margin-bottom:16px;color:var(--primary-light)}
-.timer-section{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
-.timer-display{
-  font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;
-  color:var(--secondary);letter-spacing:2px;transition:color .3s;
-}
-.timer-display.hurry{color:var(--primary);animation:pulse .5s ease infinite}
-.timer-display.timeup{color:var(--on-surface-dim)}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.timer-label{
-  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;
-  letter-spacing:3px;color:var(--on-surface-dim);text-align:center;margin-bottom:8px;
-}
-.timer-label.hurry-label{color:var(--primary);animation:blink .8s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-.player-turn{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
-  color:var(--secondary);letter-spacing:1px;margin-bottom:4px;
-}
-.player-turn .material-symbols-outlined{font-size:20px}
-.player-turn-num{color:var(--primary-light);font-size:18px}
-.player-turn.next-anim{animation:turnPop .5s ease}
-@keyframes turnPop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
 /* STAGING */
 .staging-topic{
   display:flex;align-items:center;gap:8px;
@@ -277,20 +254,6 @@ body::after{
 .staging-actions{
   display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:24px;
 }
-.staging-actions .btn-row{display:flex;gap:10px}
-.staging-actions .btn-row>*{flex:1}
-
-.nudge-toast{
-  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);
-  z-index:150;padding:10px 20px;border-radius:20px;
-  background:rgba(26,26,58,0.92);border:2px solid var(--primary);
-  box-shadow:0 0 20px rgba(255,0,127,0.3);
-  font-family:'Black Han Sans',sans-serif;font-size:15px;
-  color:var(--primary-light);text-align:center;white-space:nowrap;
-  opacity:0;pointer-events:none;
-  transition:opacity .3s,transform .3s;
-}
-.nudge-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .gacha-actions{display:flex;gap:10px;margin-top:4px;width:100%;max-width:360px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
 
@@ -521,9 +484,6 @@ body::after{
       <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
     </div>
     <div class="staging-topic" id="stagingTopic"></div>
-    <div class="player-turn" id="stagingPlayerTurn"></div>
-    <div class="timer-label" id="stagingTimerLabel">TIME REMAINING</div>
-    <div class="timer-section"><div class="timer-display" id="stagingTimerDisplay">60</div></div>
     <div class="staging-visual">
       <div class="staging-emoji">🎤</div>
       <div class="staging-msg">대화가 진행 중입니다</div>
@@ -531,10 +491,7 @@ body::after{
     </div>
     <div class="staging-actions">
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
-      <div class="btn-row">
-        <button class="btn-ghost" onclick="nextTurnStaging()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
-        <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
-      </div>
+      <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
     </div>
   </div>
 </section>
@@ -633,9 +590,6 @@ body::after{
   <div class="slot-result" id="slotResult">MATCHED!</div>
 </div>
 
-<!-- NUDGE TOAST -->
-<div class="nudge-toast" id="nudgeToast"></div>
-
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</div>
@@ -697,7 +651,6 @@ var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin'];
 function showScreen(id){
-  if(id!=='staging'&&id!=='gacha')clearTimer();
   screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
   var t=document.getElementById('screen-'+id);
   t.style.display='flex';void t.offsetHeight;t.classList.add('active');
@@ -742,9 +695,6 @@ function saveNames(){
     state.playerNames.push(v||'플레이어 '+(i+1));
   }
   showScreen('topic');
-}
-function currentPlayerName(){
-  return state.playerNames[state.currentPlayer-1]||('플레이어 '+state.currentPlayer);
 }
 
 /* TOPIC SELECTION */
@@ -823,58 +773,15 @@ function runSlot(callback){
 /* Topic → Staging */
 function startSlotFromTopic(){
   if(!state.selectedTopic)return;
-  state.currentPlayer=1;
   showScreen('staging');
-  startStagingTimer();
 }
 
 /* Staging functions */
 function renderStaging(){
   var c=cats[state.selectedTopic];
   document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l;
-  renderStagingTurn();
-  syncStagingTimer();
-}
-function renderStagingTurn(){
-  var el=document.getElementById('stagingPlayerTurn');
-  if(!el)return;
-  var name=currentPlayerName();
-  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'님</span> 차례입니다';
-}
-function startStagingTimer(){
-  clearTimer();
-  state.timerSeconds=state.timerDefault;
-  renderStagingTurn();
-  syncStagingTimer();
-  startNudgeTimer();
-  state.timer=setInterval(function(){
-    state.timerSeconds--;
-    syncStagingTimer();
-    if(state.timerSeconds<=0){
-      clearTimer();
-      setTimeout(nextTurnStaging,1500);
-    }
-  },1000);
-}
-function syncStagingTimer(){
-  var el=document.getElementById('stagingTimerDisplay');
-  var lb=document.getElementById('stagingTimerLabel');
-  var s=state.timerSeconds;
-  el.textContent=s;el.classList.remove('hurry','timeup');lb.classList.remove('hurry-label');
-  el.style.color='';
-  if(s<=0){el.textContent='0';el.classList.add('timeup');lb.textContent='NEXT TURN...';lb.classList.add('hurry-label')}
-  else if(s<=10){el.classList.add('hurry');lb.textContent='HURRY!';lb.classList.add('hurry-label')}
-  else if(s<=30){el.style.color='var(--secondary)';lb.textContent='TIME REMAINING'}
-  else{lb.textContent='TIME REMAINING'}
-}
-function nextTurnStaging(){
-  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
-  var el=document.getElementById('stagingPlayerTurn');
-  if(el){el.classList.remove('next-anim');void el.offsetHeight;el.classList.add('next-anim')}
-  startStagingTimer();
 }
 function drawFromStaging(){
-  clearTimer();
   pickQuestion();
   runSlot(function(){
     showScreen('gacha');
@@ -933,73 +840,6 @@ function renderGacha(){
 
 function backToStaging(){
   showScreen('staging');
-  startStagingTimer();
-}
-
-/* TIMER (legacy for RE-DRAW) */
-function startTimer(){
-  clearTimer();
-  state.timerSeconds=state.timerDefault;
-  renderPlayerTurn();
-  updateTimerDisplay();
-  startNudgeTimer();
-  state.timer=setInterval(function(){
-    state.timerSeconds--;
-    updateTimerDisplay();
-    if(state.timerSeconds<=0){
-      clearTimer();
-      setTimeout(nextTurn,1500);
-    }
-  },1000);
-}
-function clearTimer(){if(state.timer){clearInterval(state.timer);state.timer=null}clearNudgeTimer()}
-function resetTimer(){startTimer()}
-function nextTurn(){
-  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
-  var el=document.getElementById('playerTurn');
-  el.classList.remove('next-anim');
-  void el.offsetHeight;
-  el.classList.add('next-anim');
-  startTimer();
-}
-function renderPlayerTurn(){
-  var el=document.getElementById('playerTurn');
-  if(!el)return;
-  var name=currentPlayerName();
-  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="player-turn-num">'+escapeHtml(name)+'님</span> 차례입니다';
-}
-var nudgeMessages=[
-  '좋은 이야기 나오고 있어요!','조금 더 깊이 들어가볼까요?',
-  '다른 분도 한마디 해볼까요?','핵심을 한 문장으로 정리해보세요!',
-  '좋아요, 계속 가봅시다!','지금 이 순간에 집중!',
-  '솔직한 이야기가 최고입니다','잠깐, 한 번 더 생각해볼까요?'
-];
-var nudgeTimer=null;
-function showNudge(msg){
-  var el=document.getElementById('nudgeToast');
-  el.textContent=msg;
-  el.classList.add('show');
-  setTimeout(function(){el.classList.remove('show')},2000);
-}
-function startNudgeTimer(){
-  clearNudgeTimer();
-  var elapsed=0;
-  nudgeTimer=setInterval(function(){
-    elapsed++;
-    if(elapsed%20===0){
-      showNudge(nudgeMessages[Math.floor(Math.random()*nudgeMessages.length)]);
-    }
-  },1000);
-}
-function clearNudgeTimer(){if(nudgeTimer){clearInterval(nudgeTimer);nudgeTimer=null}}
-function updateTimerDisplay(){
-  var el=document.getElementById('timerDisplay'),lb=document.getElementById('timerLabel'),s=state.timerSeconds;
-  el.textContent=s;el.classList.remove('hurry','timeup');lb.classList.remove('hurry-label');
-  el.style.color='';
-  if(s<=0){el.textContent='0';el.classList.add('timeup');lb.textContent='NEXT TURN...';lb.classList.add('hurry-label')}
-  else if(s<=10){el.classList.add('hurry');lb.textContent='HURRY!';lb.classList.add('hurry-label')}
-  else if(s<=30){el.style.color='var(--secondary)';lb.textContent='TIME REMAINING'}
-  else{lb.textContent='TIME REMAINING'}
 }
 
 /* ===== SUPABASE CRUD ===== */
