@@ -254,15 +254,6 @@ body::after{
 .staging-actions{
   display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;margin-top:32px;
 }
-.gacha-player-turn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;
-  color:var(--secondary);letter-spacing:1px;margin-bottom:8px;
-}
-.gacha-player-turn .material-symbols-outlined{font-size:22px}
-.gacha-player-turn .pname{color:var(--primary-light);font-size:20px}
-.gacha-player-turn.next-anim{animation:turnPop .5s ease}
-@keyframes turnPop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
 .gacha-timer-row{
   display:flex;align-items:center;justify-content:center;gap:18px;
   width:100%;max-width:520px;margin-top:14px;
@@ -274,18 +265,33 @@ body::after{
 .gacha-timer.hurry{color:var(--primary);animation:gachaPulse .5s ease infinite}
 .gacha-timer.timeup{color:var(--on-surface-dim)}
 @keyframes gachaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.btn-next-turn{
-  display:flex;align-items:center;gap:6px;
-  padding:10px 22px;border-radius:10px;border:2px solid var(--secondary);
-  background:transparent;color:var(--secondary);
-  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
-  letter-spacing:1px;cursor:pointer;transition:all .2s;
-}
-.btn-next-turn:active{background:var(--secondary);color:var(--bg)}
-.btn-next-turn.glow{border-color:var(--primary);color:var(--primary);animation:nextGlow 1s ease infinite}
-@keyframes nextGlow{0%,100%{box-shadow:0 0 8px rgba(255,0,127,0.4)}50%{box-shadow:0 0 20px rgba(255,0,127,0.8)}}
 .gacha-actions{display:flex;gap:12px;margin-top:8px;width:100%;max-width:520px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
+/* DEPTH SELECTOR */
+.depth-selector{width:100%;max-width:560px;margin-bottom:20px;text-align:center}
+.depth-label{font-size:13px;color:var(--on-surface-dim);margin-bottom:8px;letter-spacing:1px;font-weight:600}
+.depth-btns{display:flex;gap:8px;justify-content:center}
+.depth-btn{padding:8px 18px;border-radius:20px;border:2px solid var(--outline-dim);background:var(--surface);color:var(--on-surface-dim);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.depth-btn:hover{border-color:var(--secondary)}
+.depth-btn.active[data-d="1"]{border-color:#39FF14;color:#39FF14;box-shadow:0 0 12px rgba(57,255,20,0.3)}
+.depth-btn.active[data-d="2"]{border-color:#00B4FF;color:#00B4FF;box-shadow:0 0 12px rgba(0,180,255,0.3)}
+.depth-btn.active[data-d="3"]{border-color:#C77DFF;color:#C77DFF;box-shadow:0 0 12px rgba(199,125,255,0.3)}
+.depth-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;margin-left:8px}
+/* PARTICIPANT GRID */
+.participant-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px;margin:8px 0}
+.participant-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:var(--surface);border:2px solid var(--outline-dim);font-size:13px;font-weight:600;color:var(--on-surface-dim);cursor:pointer;transition:all .2s;user-select:none}
+.participant-chip:hover{border-color:var(--secondary)}
+.participant-chip.active{border-color:var(--primary);color:var(--primary-light);box-shadow:0 0 12px rgba(255,0,127,0.3)}
+.participant-chip.quiet{border-color:var(--primary-dim,#993366)}
+.participant-chip.glow{animation:chipGlow 1s ease infinite}
+@keyframes chipGlow{0%,100%{box-shadow:0 0 8px rgba(255,0,127,0.3)}50%{box-shadow:0 0 20px rgba(255,0,127,0.7)}}
+.participant-chip .p-bar{width:24px;height:4px;border-radius:2px;background:var(--outline-dim);overflow:hidden}
+.participant-chip .p-bar-fill{height:100%;border-radius:2px;background:var(--secondary);transition:width .3s}
+.participant-chip.active .p-bar-fill{background:var(--primary-light)}
+.participation-hint{font-size:13px;color:var(--primary-light);text-align:center;min-height:20px;margin-bottom:4px}
+/* STAGING NUDGE */
+.staging-nudge{width:100%;max-width:480px;min-height:36px;text-align:center;padding:10px 16px;font-size:14px;color:var(--secondary);opacity:0;transition:opacity .5s ease}
+.staging-nudge.show{opacity:1}
 
 /* ===== SLOT MACHINE OVERLAY ===== */
 .slot-overlay{
@@ -500,6 +506,14 @@ body::after{
       <p>Select a category for your session</p>
     </div>
     <div class="topic-grid" id="topicGrid"></div>
+    <div class="depth-selector">
+      <div class="depth-label">CONVERSATION DEPTH</div>
+      <div class="depth-btns">
+        <button class="depth-btn active" data-d="1" onclick="setDepth(1)">🟢 가볍게</button>
+        <button class="depth-btn" data-d="2" onclick="setDepth(2)">🔵 깊게</button>
+        <button class="depth-btn" data-d="3" onclick="setDepth(3)">🟣 솔직하게</button>
+      </div>
+    </div>
     <button class="btn-primary" id="btnTopicNext" onclick="startSlotFromTopic()" style="opacity:0.4;pointer-events:none">
       <span>NEXT</span><span class="material-symbols-outlined">arrow_forward</span>
     </button>
@@ -519,6 +533,7 @@ body::after{
       <div class="staging-msg">대화가 진행 중입니다</div>
       <div class="staging-hint">부스팅이 필요할 때 카드를 뽑아보세요</div>
     </div>
+    <div class="staging-nudge" id="stagingNudge"></div>
     <div class="staging-actions">
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
       <button class="btn-ghost" onclick="showScreen('topic')"><span class="material-symbols-outlined">swap_horiz</span>TOPIC</button>
@@ -534,14 +549,15 @@ body::after{
       <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('admin')">settings</span>
     </div>
     <div class="gacha-tabs" id="gachaTabs"></div>
-    <div class="gacha-player-turn" id="gachaPlayerTurn"></div>
+    <div class="participant-grid" id="participantGrid"></div>
+    <div class="participation-hint" id="participationHint"></div>
     <div id="questionArea"></div>
     <div class="gacha-timer-row">
       <div class="gacha-timer" id="gachaTimer">60</div>
-      <button class="btn-next-turn" id="btnNextTurn" onclick="nextTurnGacha()"><span class="material-symbols-outlined">skip_next</span>NEXT</button>
     </div>
     <div class="gacha-actions" style="margin-top:12px">
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
+      <button class="btn-secondary" onclick="bumpDepth()"><span class="material-symbols-outlined">arrow_upward</span>깊이+</button>
       <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
     </div>
   </div>
@@ -595,6 +611,13 @@ body::after{
         <div id="bbangFields" style="display:none">
           <input id="editQBbangMsg" class="admin-input" placeholder="꽝 메시지 (예: 꽝!)" style="margin-bottom:8px">
           <textarea id="editQBbangTip" class="admin-textarea admin-input" placeholder="꽝 팁"></textarea>
+        </div>
+        <div id="depthField">
+          <select id="editQDepth" class="admin-select">
+            <option value="1">🟢 가볍게 (Light)</option>
+            <option value="2">🔵 깊게 (Deep)</option>
+            <option value="3">🟣 솔직하게 (Honest)</option>
+          </select>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-primary" onclick="saveQuestion()" style="flex:1;max-width:none">
@@ -651,37 +674,37 @@ var cats={
   bbang:{l:'꽝!',c:'#f0a500',e:'🎊',icon:'celebration',en:'Special'}
 };
 var qs=[
-  {c:'warmup',t:'오늘 이 자리에 오면서 머릿속에 맴돌던 단어 하나가 있다면?',tip:'판단 없이 그냥 받아주세요. 부정적 단어가 나올수록 좋습니다.'},
-  {c:'warmup',t:'요즘 가장 "잘 되고 있다"고 느끼는 것 하나와,\n"안 되고 있다"고 느끼는 것 하나는?',tip:'일 이야기가 아니어도 괜찮습니다.'},
-  {c:'warmup',t:'지금 이 그룹코칭을 색깔로 표현한다면?\n이유도 한 마디로.',tip:'정답 없이 가볍게. 웃음이 나오면 성공.'},
-  {c:'warmup',t:'오늘 이 자리에서 꺼내놓고 싶은 것이 있다면?',tip:'이 답변이 오늘 세션의 방향을 바꿀 수도 있습니다.'},
-  {c:'warmup',t:'최근 한 주를 날씨로 표현하면?',tip:'짧고 가볍게. 분위기 파악에 좋은 질문입니다.'},
-  {c:'jira',t:'"누가 무엇을 하고 있는지" 몰라서\n가장 아팠던 순간은?',tip:'사례가 구체적일수록 대화가 깊어집니다. 조용히 기다려 주세요.'},
-  {c:'jira',t:'Jira를 쓰면서 "이건 진짜 편하다" 싶었던\n경험이 있다면?',tip:'"없다"는 답변 자체도 좋은 재료입니다.'},
-  {c:'jira',t:'지금 실행 현황을 확인하는 데\n몇 단계가 걸리나요?',tip:'현재 구조를 화이트보드에 함께 그려보세요.'},
-  {c:'jira',t:'구성원이 Jira에 저항하는 가장 큰 이유,\n솔직히 어떻게 생각하세요?',tip:'담당님 본인의 저항 이유이기도 한지 함께 탐색해보세요.'},
-  {c:'jira',t:'보고서를 없애도 된다면,\n가장 먼저 없애고 싶은 보고서는?',tip:'구체적인 이름이 나올수록 다음 대화로 이어지기 좋습니다.'},
-  {c:'jira',t:'"멘션 한 번"이 조직을 움직인다고\n생각하세요? 경험이 있다면?',tip:'작은 행동의 신호 효과를 탐색하는 질문입니다.'},
-  {c:'jira',t:'이번 주 미션을 하면서 어떤 느낌이었나요?\n예상과 달랐던 점은?',tip:'2회차 이후 체크인에 활용하세요.'},
-  {c:'leader',t:'담당으로서 가장 "나답지 않다"고\n느끼는 순간은 언제인가요?',tip:'심리적 안전감이 충분히 형성된 이후 쓰세요.'},
-  {c:'leader',t:'"리더가 없어도 돌아가는 팀"을 만들기 위해\n지금 가장 필요한 것은?',tip:'자율 실행 설계자 역량과 연결되는 질문입니다.'},
-  {c:'leader',t:'구성원에게 "맥락"을 설명하는 데\n가장 많은 시간을 쓰는 상황은?',tip:'Initiative-Epic-Task 연결 필요성으로 자연스럽게 이어집니다.'},
-  {c:'leader',t:'팀장에게 가장 많이 하는 말 Top 3는?\n그 말이 없어지면 좋겠나요?',tip:'반복 커뮤니케이션 비용을 실감하게 하는 질문입니다.'},
-  {c:'peer',t:'이 그룹에서 오늘 가장 공감된 한 마디는?',tip:'회차 중반 또는 클로징 직전에 사용하기 좋습니다.'},
-  {c:'peer',t:'옆 분이 말씀하신 것 중\n"나도 그런데"라고 느낀 게 있었나요?',tip:'연대감 형성에 효과적입니다.'},
-  {c:'peer',t:'이 자리에서 아직 꺼내지 못한 이야기가 있다면?',tip:'세션 후반부에 사용하세요. 침묵이 길어도 기다려주세요.'},
-  {c:'peer',t:'다음 회차 전까지 옆 분과\n딱 하나 약속한다면?',tip:'페어 미션 만들기에 좋은 질문입니다.'},
-  {c:'reflection',t:'오늘 이 자리에 오기 전과 지금,\n달라진 게 있다면?',tip:'클로징 체크아웃으로 최적입니다.'},
-  {c:'reflection',t:'오늘 대화 중 가장 불편했던 순간은\n언제였나요?',tip:'불편함이 나오면 성공입니다. 다음 세션 설계에 반영하세요.'},
-  {c:'reflection',t:'지난 회차 미션, 못 했다면\n왜 못 했는지 솔직하게?',tip:'"못 했다"는 답변이 가장 중요한 데이터입니다. 비판 없이 받으세요.'},
-  {c:'reflection',t:'이 그룹코칭이 끝났을 때\n"이것 하나만 남아도 성공"이라고 생각하는 것은?',tip:'1회차 말미나 최종 회차에 활용하세요.'},
+  {c:'warmup',t:'오늘 이 자리에 오면서 머릿속에 맴돌던 단어 하나가 있다면?',tip:'판단 없이 그냥 받아주세요. 부정적 단어가 나올수록 좋습니다.',d:1},
+  {c:'warmup',t:'요즘 가장 "잘 되고 있다"고 느끼는 것 하나와,\n"안 되고 있다"고 느끼는 것 하나는?',tip:'일 이야기가 아니어도 괜찮습니다.',d:1},
+  {c:'warmup',t:'지금 이 그룹코칭을 색깔로 표현한다면?\n이유도 한 마디로.',tip:'정답 없이 가볍게. 웃음이 나오면 성공.',d:1},
+  {c:'warmup',t:'오늘 이 자리에서 꺼내놓고 싶은 것이 있다면?',tip:'이 답변이 오늘 세션의 방향을 바꿀 수도 있습니다.',d:2},
+  {c:'warmup',t:'최근 한 주를 날씨로 표현하면?',tip:'짧고 가볍게. 분위기 파악에 좋은 질문입니다.',d:2},
+  {c:'jira',t:'"누가 무엇을 하고 있는지" 몰라서\n가장 아팠던 순간은?',tip:'사례가 구체적일수록 대화가 깊어집니다. 조용히 기다려 주세요.',d:2},
+  {c:'jira',t:'Jira를 쓰면서 "이건 진짜 편하다" 싶었던\n경험이 있다면?',tip:'"없다"는 답변 자체도 좋은 재료입니다.',d:1},
+  {c:'jira',t:'지금 실행 현황을 확인하는 데\n몇 단계가 걸리나요?',tip:'현재 구조를 화이트보드에 함께 그려보세요.',d:1},
+  {c:'jira',t:'구성원이 Jira에 저항하는 가장 큰 이유,\n솔직히 어떻게 생각하세요?',tip:'담당님 본인의 저항 이유이기도 한지 함께 탐색해보세요.',d:3},
+  {c:'jira',t:'보고서를 없애도 된다면,\n가장 먼저 없애고 싶은 보고서는?',tip:'구체적인 이름이 나올수록 다음 대화로 이어지기 좋습니다.',d:2},
+  {c:'jira',t:'"멘션 한 번"이 조직을 움직인다고\n생각하세요? 경험이 있다면?',tip:'작은 행동의 신호 효과를 탐색하는 질문입니다.',d:2},
+  {c:'jira',t:'이번 주 미션을 하면서 어떤 느낌이었나요?\n예상과 달랐던 점은?',tip:'2회차 이후 체크인에 활용하세요.',d:3},
+  {c:'leader',t:'담당으로서 가장 "나답지 않다"고\n느끼는 순간은 언제인가요?',tip:'심리적 안전감이 충분히 형성된 이후 쓰세요.',d:3},
+  {c:'leader',t:'"리더가 없어도 돌아가는 팀"을 만들기 위해\n지금 가장 필요한 것은?',tip:'자율 실행 설계자 역량과 연결되는 질문입니다.',d:2},
+  {c:'leader',t:'구성원에게 "맥락"을 설명하는 데\n가장 많은 시간을 쓰는 상황은?',tip:'Initiative-Epic-Task 연결 필요성으로 자연스럽게 이어집니다.',d:2},
+  {c:'leader',t:'팀장에게 가장 많이 하는 말 Top 3는?\n그 말이 없어지면 좋겠나요?',tip:'반복 커뮤니케이션 비용을 실감하게 하는 질문입니다.',d:3},
+  {c:'peer',t:'이 그룹에서 오늘 가장 공감된 한 마디는?',tip:'회차 중반 또는 클로징 직전에 사용하기 좋습니다.',d:1},
+  {c:'peer',t:'옆 분이 말씀하신 것 중\n"나도 그런데"라고 느낀 게 있었나요?',tip:'연대감 형성에 효과적입니다.',d:2},
+  {c:'peer',t:'이 자리에서 아직 꺼내지 못한 이야기가 있다면?',tip:'세션 후반부에 사용하세요. 침묵이 길어도 기다려주세요.',d:3},
+  {c:'peer',t:'다음 회차 전까지 옆 분과\n딱 하나 약속한다면?',tip:'페어 미션 만들기에 좋은 질문입니다.',d:2},
+  {c:'reflection',t:'오늘 이 자리에 오기 전과 지금,\n달라진 게 있다면?',tip:'클로징 체크아웃으로 최적입니다.',d:2},
+  {c:'reflection',t:'오늘 대화 중 가장 불편했던 순간은\n언제였나요?',tip:'불편함이 나오면 성공입니다. 다음 세션 설계에 반영하세요.',d:3},
+  {c:'reflection',t:'지난 회차 미션, 못 했다면\n왜 못 했는지 솔직하게?',tip:'"못 했다"는 답변이 가장 중요한 데이터입니다. 비판 없이 받으세요.',d:3},
+  {c:'reflection',t:'이 그룹코칭이 끝났을 때\n"이것 하나만 남아도 성공"이라고 생각하는 것은?',tip:'1회차 말미나 최종 회차에 활용하세요.',d:2},
   {c:'bbang',bm:'꽝!',bt:'5초 침묵해보세요. 침묵도 코칭입니다.'},
   {c:'bbang',bm:'꽝!',bt:'커피 한 모금 타이밍! 잠깐 쉬어가세요.'},
   {c:'bbang',bm:'꽝!',bt:'지금 이 분위기를 한 단어로 표현한다면?'}
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0};
 
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin'];
@@ -692,6 +715,7 @@ function showScreen(id){
   document.querySelectorAll('.nav-item').forEach(function(n,i){
     n.classList.toggle('active',(id==='home'&&i===0)||((id==='gacha'||id==='staging')&&i===1));
   });
+  if(id!=='staging')clearNudgeTimer();
   if(id==='setup')renderPlayerIcons();
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
@@ -729,6 +753,7 @@ function saveNames(){
     var v=inputs[i].value.trim();
     state.playerNames.push(v||'플레이어 '+(i+1));
   }
+  state.turnCount=new Array(state.playerCount).fill(0);
   showScreen('topic');
 }
 
@@ -812,11 +837,21 @@ function startSlotFromTopic(){
 }
 
 /* Staging functions */
+var depthLabels={1:'🟢 가볍게',2:'🔵 깊게',3:'🟣 솔직하게'};
+function setDepth(d){
+  state.depth=d;
+  document.querySelectorAll('.depth-btn').forEach(function(b){b.classList.toggle('active',parseInt(b.getAttribute('data-d'))===d)});
+}
+function bumpDepth(){
+  if(state.depth<3){setDepth(state.depth+1);renderGachaTabs()}
+}
 function renderStaging(){
   var c=cats[state.selectedTopic];
-  document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l;
+  document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l+' <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
+  startNudgeTimer();
 }
 function drawFromStaging(){
+  clearNudgeTimer();
   pickQuestion();
   runSlot(function(){
     showScreen('gacha');
@@ -833,19 +868,17 @@ function reDraw(){
   });
 }
 
-/* GACHA TIMER & PLAYER TURN */
+/* GACHA TIMER & PARTICIPANT SELECTION */
 function startGachaTimer(){
   clearGachaTimer();
   state.timerSeconds=state.timerDefault;
-  renderGachaPlayerTurn();
   syncGachaTimer();
   state.timer=setInterval(function(){
     state.timerSeconds--;
     syncGachaTimer();
     if(state.timerSeconds<=0){
       clearGachaTimer();
-      var btn=document.getElementById('btnNextTurn');
-      if(btn)btn.classList.add('glow');
+      document.querySelectorAll('.participant-chip.quiet').forEach(function(c){c.classList.add('glow')});
     }
   },1000);
 }
@@ -859,18 +892,42 @@ function syncGachaTimer(){
   else if(s<=10){el.classList.add('hurry')}
   else{el.style.color=''}
 }
-function renderGachaPlayerTurn(){
-  var el=document.getElementById('gachaPlayerTurn');
+function renderParticipantGrid(){
+  var el=document.getElementById('participantGrid');
   if(!el)return;
-  var name=state.playerNames[state.currentPlayer-1]||('플레이어 '+state.currentPlayer);
-  el.innerHTML='<span class="material-symbols-outlined">person</span><span class="pname">'+escapeHtml(name)+'님</span> 차례입니다';
+  if(!state.turnCount.length) state.turnCount=new Array(state.playerCount).fill(0);
+  var maxT=Math.max.apply(null,state.turnCount)||1;
+  var minT=Math.min.apply(null,state.turnCount);
+  var h='';
+  for(var i=0;i<state.playerCount;i++){
+    var name=state.playerNames[i]||('플레이어 '+(i+1));
+    var isActive=(state.currentPlayer===i+1);
+    var isQuiet=(state.turnCount[i]===minT&&maxT-minT>=2);
+    var pct=Math.max(10,(state.turnCount[i]/maxT)*100);
+    h+='<div class="participant-chip'+(isActive?' active':'')+(isQuiet?' quiet':'')+'" onclick="selectParticipant('+(i+1)+')">';
+    h+='<span>'+escapeHtml(name)+'</span>';
+    h+='<div class="p-bar"><div class="p-bar-fill" style="width:'+pct+'%"></div></div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+  var hintEl=document.getElementById('participationHint');
+  if(hintEl){
+    if(maxT-minT>=2){
+      var quietNames=[];
+      for(var j=0;j<state.turnCount.length;j++){
+        if(state.turnCount[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
+      }
+      hintEl.textContent='💡 '+quietNames.join(', ')+'님이 아직 발언이 적어요';
+    }else{hintEl.textContent=''}
+  }
 }
-function nextTurnGacha(){
-  state.currentPlayer=state.currentPlayer>=state.playerCount?1:state.currentPlayer+1;
-  var el=document.getElementById('gachaPlayerTurn');
-  if(el){el.classList.remove('next-anim');void el.offsetHeight;el.classList.add('next-anim')}
-  var btn=document.getElementById('btnNextTurn');
-  if(btn)btn.classList.remove('glow');
+function selectParticipant(idx){
+  if(state.currentPlayer!==idx){
+    state.turnCount[state.currentPlayer-1]++;
+  }
+  state.currentPlayer=idx;
+  document.querySelectorAll('.participant-chip.glow').forEach(function(c){c.classList.remove('glow')});
+  renderParticipantGrid();
   startGachaTimer();
 }
 
@@ -882,7 +939,7 @@ function pickQuestion(){
     state.currentQuestion=bbangPool[idx];
     return;
   }
-  var pool=qs.filter(function(q){return q.c===state.selectedTopic});
+  var pool=qs.filter(function(q){return q.c===state.selectedTopic&&(q.d||1)<=state.depth});
   if(!pool.length)return;
   var idx2,tries=0;
   do{idx2=Math.floor(Math.random()*pool.length);tries++}
@@ -896,10 +953,11 @@ function renderGachaTabs(){
   var q=state.currentQuestion;
   if(!q)return;
   var c=cats[q.c];
-  document.getElementById('gachaTabs').innerHTML='<span class="gacha-tab active">'+c.e+' '+c.l+'</span>';
+  document.getElementById('gachaTabs').innerHTML='<span class="gacha-tab active">'+c.e+' '+c.l+'</span> <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
 }
 function renderGacha(){
   renderGachaTabs();
+  renderParticipantGrid();
   var q=state.currentQuestion;if(!q)return;
   var cat=cats[q.c],a=document.getElementById('questionArea');
   var h='<div class="question-card"><span class="q-new">NEW QUESTION</span>';
@@ -920,6 +978,38 @@ function backToStaging(){
   showScreen('staging');
 }
 
+/* SILENCE NUDGE */
+var nudges=[
+  '지금 침묵은 깊이 생각하는 중입니다 🧠',
+  '카드를 뽑아 대화를 전환해볼까요?',
+  '아직 이야기하지 않은 분이 있을 수 있어요',
+  '좋은 흐름이에요, 조금 더 가볼까요?',
+  '핵심을 한 문장으로 정리해보세요',
+  '잠깐 멈추고 호흡 한 번 해볼까요?',
+  '지금 이 순간에 집중해보세요',
+  '다른 관점에서 바라보면 어떨까요?'
+];
+function startNudgeTimer(){
+  clearNudgeTimer();
+  state.nudgeCount=0;
+  state.nudgeTimer=setInterval(function(){
+    state.nudgeCount++;
+    if(state.nudgeCount%30===0) showNudge();
+  },1000);
+}
+function clearNudgeTimer(){
+  if(state.nudgeTimer){clearInterval(state.nudgeTimer);state.nudgeTimer=null}
+  var el=document.getElementById('stagingNudge');
+  if(el) el.classList.remove('show');
+}
+function showNudge(){
+  var el=document.getElementById('stagingNudge');
+  if(!el)return;
+  el.textContent=nudges[Math.floor(Math.random()*nudges.length)];
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show')},5000);
+}
+
 /* ===== SUPABASE CRUD ===== */
 // assign _id to hardcoded questions as fallback
 for(var _i=0;_i<qs.length;_i++){qs[_i]._id=_i+1}
@@ -933,13 +1023,13 @@ function escapeHtml(s){
 function rowToQ(r){
   var q={c:r.category,_id:r.id};
   if(r.category==='bbang'){q.bm=r.bbang_msg||'꽝!';q.bt=r.bbang_tip||''}
-  else{q.t=r.text||'';q.tip=r.tip||''}
+  else{q.t=r.text||'';q.tip=r.tip||'';q.d=r.depth||1}
   return q;
 }
 function qToRow(q){
   var r={category:q.c};
   if(q.c==='bbang'){r.bbang_msg=q.bm;r.bbang_tip=q.bt;r.text=null;r.tip=null}
-  else{r.text=q.t;r.tip=q.tip;r.bbang_msg=null;r.bbang_tip=null}
+  else{r.text=q.t;r.tip=q.tip;r.bbang_msg=null;r.bbang_tip=null;r.depth=q.d||1}
   return r;
 }
 
@@ -1079,6 +1169,7 @@ function toggleBbangFields(){
   var isBbang=document.getElementById('editQCat').value==='bbang';
   document.getElementById('normalFields').style.display=isBbang?'none':'block';
   document.getElementById('bbangFields').style.display=isBbang?'block':'none';
+  document.getElementById('depthField').style.display=isBbang?'none':'block';
 }
 
 function openAddForm(){
@@ -1090,6 +1181,7 @@ function openAddForm(){
   document.getElementById('editQTip').value='';
   document.getElementById('editQBbangMsg').value='';
   document.getElementById('editQBbangTip').value='';
+  document.getElementById('editQDepth').value='1';
   toggleBbangFields();
   document.getElementById('adminForm').style.display='flex';
   document.getElementById('btnAddQ').style.display='none';
@@ -1114,6 +1206,7 @@ function openEditForm(id){
     document.getElementById('editQTip').value=q.tip||'';
     document.getElementById('editQBbangMsg').value='';
     document.getElementById('editQBbangTip').value='';
+    document.getElementById('editQDepth').value=String(q.d||1);
   }
   toggleBbangFields();
   document.getElementById('adminForm').style.display='flex';
@@ -1137,6 +1230,7 @@ function saveQuestion(){
   }else{
     q.t=document.getElementById('editQText').value.trim();
     q.tip=document.getElementById('editQTip').value.trim();
+    q.d=parseInt(document.getElementById('editQDepth').value)||1;
     if(!q.t){showAdminStatus('질문 텍스트를 입력하세요','err');return}
   }
   if(adminEditMode==='add'){
