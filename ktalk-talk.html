@@ -546,7 +546,7 @@ body::after{
     <div class="staging-visual">
       <div class="staging-emoji">🎤</div>
       <div class="staging-msg">대화가 진행 중입니다</div>
-      <div class="staging-hint">발언자를 탭하여 발언 시간을 기록하세요</div>
+      <div class="staging-hint">발언자를 클릭하거나 숫자키(1~7)로 기록하세요</div>
     </div>
     <div class="speaker-tracker" id="speakerTracker"></div>
     <div class="staging-nudge" id="stagingNudge"></div>
@@ -720,7 +720,7 @@ var qs=[
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayer:-1,speakTimer:null};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null};
 
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin'];
@@ -771,7 +771,7 @@ function saveNames(){
   }
   state.turnCount=new Array(state.playerCount).fill(0);
   state.speakTime=new Array(state.playerCount).fill(0);
-  state.speakingPlayer=-1;
+  state.speakingPlayers=new Array(state.playerCount).fill(false);
   showScreen('topic');
 }
 
@@ -874,11 +874,12 @@ function renderSpeakerTracker(){
   var el=document.getElementById('speakerTracker');
   if(!el)return;
   if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
+  if(!state.speakingPlayers.length) state.speakingPlayers=new Array(state.playerCount).fill(false);
   var maxT=Math.max.apply(null,state.speakTime)||1;
   var h='';
   for(var i=0;i<state.playerCount;i++){
     var name=state.playerNames[i]||('플레이어 '+(i+1));
-    var isSpeaking=(state.speakingPlayer===i);
+    var isSpeaking=state.speakingPlayers[i];
     var pct=Math.max(5,(state.speakTime[i]/maxT)*100);
     h+='<div class="speaker-btn'+(isSpeaking?' speaking':'')+'" onclick="toggleSpeaker('+i+')">';
     h+='<div class="s-num">'+(i+1)+'</div>';
@@ -890,29 +891,43 @@ function renderSpeakerTracker(){
   el.innerHTML=h;
 }
 function toggleSpeaker(idx){
-  if(state.speakingPlayer===idx){
-    stopSpeakTimer();
-    state.speakingPlayer=-1;
-  }else{
-    stopSpeakTimer();
-    state.speakingPlayer=idx;
-    state.turnCount[idx]++;
-    startSpeakTimer();
-  }
+  if(!state.speakingPlayers.length) state.speakingPlayers=new Array(state.playerCount).fill(false);
+  state.speakingPlayers[idx]=!state.speakingPlayers[idx];
+  if(state.speakingPlayers[idx]) state.turnCount[idx]++;
+  ensureSpeakTimer();
   renderSpeakerTracker();
+}
+function anySpeaking(){
+  for(var i=0;i<state.speakingPlayers.length;i++){if(state.speakingPlayers[i])return true}
+  return false;
+}
+function ensureSpeakTimer(){
+  if(anySpeaking()&&!state.speakTimer) startSpeakTimer();
+  else if(!anySpeaking()) stopSpeakTimer();
 }
 function startSpeakTimer(){
   stopSpeakTimer();
   state.speakTimer=setInterval(function(){
-    if(state.speakingPlayer>=0){
-      state.speakTime[state.speakingPlayer]++;
-      renderSpeakerTracker();
+    for(var i=0;i<state.speakingPlayers.length;i++){
+      if(state.speakingPlayers[i]) state.speakTime[i]++;
     }
+    renderSpeakerTracker();
   },1000);
 }
 function stopSpeakTimer(){
   if(state.speakTimer){clearInterval(state.speakTimer);state.speakTimer=null}
 }
+/* Keyboard shortcut: 1~7 toggles speaker on staging screen */
+document.addEventListener('keydown',function(e){
+  var screen=document.getElementById('screen-staging');
+  if(!screen||!screen.classList.contains('active'))return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  var num=parseInt(e.key);
+  if(num>=1&&num<=state.playerCount){
+    e.preventDefault();
+    toggleSpeaker(num-1);
+  }
+});
 function drawFromStaging(){
   clearNudgeTimer();
   stopSpeakTimer();
@@ -1038,7 +1053,7 @@ function renderGacha(){
 function backToStaging(){
   clearGachaTimer();
   showScreen('staging');
-  if(state.speakingPlayer>=0) startSpeakTimer();
+  if(anySpeaking()) startSpeakTimer();
 }
 
 /* SILENCE NUDGE */
