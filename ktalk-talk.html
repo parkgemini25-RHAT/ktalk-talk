@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>KTALK TALK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbitron:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -260,6 +260,34 @@ body::after{
 }
 .gacha-actions{display:flex;gap:12px;margin-top:8px;width:100%;max-width:520px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
+/* ===== SESSION SUMMARY ===== */
+.summary-hero{text-align:center;padding:24px 0 16px;animation:summarySlideIn .6s cubic-bezier(.34,1.5,.64,1)}
+@keyframes summarySlideIn{from{opacity:0;transform:translateY(-24px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes summaryFadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.summary-title{font-family:'Black Han Sans',sans-serif;font-size:32px;letter-spacing:2px;margin-bottom:12px}
+.summary-time{font-family:'Orbitron',sans-serif;font-size:52px;font-weight:700;letter-spacing:3px;line-height:1;animation:summaryPop 1s ease-out}
+@keyframes summaryPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.summary-time-label{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--on-surface-dim);margin-top:8px}
+.summary-badges{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.summary-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;background:var(--surface-bright);color:var(--on-surface-dim)}
+.summary-ring-section{position:relative;display:flex;flex-direction:column;align-items:center;margin:20px 0;animation:summaryFadeUp .8s ease-out .3s both}
+.summary-ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--on-surface-dim);letter-spacing:2px}
+.summary-stats{width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px;animation:summaryFadeUp .8s ease-out .5s both}
+.summary-player-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:14px;border:2px solid var(--outline-dim)}
+.summary-player-row.top1{border-color:var(--primary);box-shadow:0 0 20px 3px rgba(255,0,127,.15);background:var(--surface-high)}
+.summary-rank{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;background:var(--surface-bright);color:var(--on-surface-dim);border:2px solid var(--outline-dim)}
+.summary-player-row.top1 .summary-rank{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 10px rgba(255,0,127,.4)}
+.summary-player-info{flex:1;min-width:0}
+.summary-player-name{font-size:14px;font-weight:700;color:var(--on-surface);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.summary-player-meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--on-surface-dim)}
+.summary-player-meta span{display:flex;align-items:center;gap:3px}
+.summary-player-time{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--secondary);letter-spacing:1px;flex-shrink:0}
+.summary-player-row.top1 .summary-player-time{color:var(--primary-light)}
+.summary-bar-track{width:100%;height:4px;border-radius:2px;background:var(--outline-dim);overflow:hidden;margin-top:5px}
+.summary-bar-fill{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.25,1,.5,1)}
+.summary-insight{width:100%;max-width:520px;padding:14px 18px;border-radius:14px;background:rgba(57,255,20,.06);border:2px solid rgba(57,255,20,.2);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--tertiary);margin-bottom:28px;animation:summaryFadeUp .8s ease-out .7s both}
+.summary-insight .material-symbols-outlined{font-size:20px;color:var(--tertiary)}
+.summary-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:480px;animation:summaryFadeUp .8s ease-out .9s both}
 /* SESSION BAR */
 .session-bar{
   width:100%;max-width:520px;margin-top:auto;padding-top:16px;
@@ -664,6 +692,31 @@ body::after{
   </div>
 </section>
 
+<!-- SCREEN: SESSION SUMMARY -->
+<section id="screen-summary" class="screen">
+  <div class="content">
+    <div class="header">
+      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
+    </div>
+    <div class="summary-hero">
+      <div class="summary-title neon-pink">SESSION COMPLETE</div>
+      <div class="summary-time neon-cyan" id="summaryTime">0:00:00</div>
+      <div class="summary-time-label">TOTAL SESSION TIME</div>
+      <div class="summary-badges" id="summaryBadges"></div>
+    </div>
+    <div class="summary-ring-section">
+      <canvas id="summaryRing" width="200" height="200"></canvas>
+      <div class="summary-ring-label" id="summaryRingLabel"></div>
+    </div>
+    <div class="summary-stats" id="summaryStats"></div>
+    <div class="summary-insight" id="summaryInsight"></div>
+    <div class="summary-actions">
+      <button class="btn-primary" onclick="restartSession()"><span class="material-symbols-outlined">replay</span>NEW SESSION</button>
+      <button class="btn-ghost" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</button>
+    </div>
+  </div>
+</section>
+
 <!-- SLOT MACHINE OVERLAY -->
 <div class="slot-overlay" id="slotOverlay">
   <div class="slot-title">카드를 뽑는 중...</div>
@@ -810,7 +863,7 @@ var qs=[
 var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0};
 
 /* SCREEN TRANSITION */
-var screenIds=['home','setup','names','topic','staging','gacha','admin'];
+var screenIds=['home','setup','names','topic','staging','gacha','admin','summary'];
 function showScreen(id){
   screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
   var t=document.getElementById('screen-'+id);
@@ -824,6 +877,7 @@ function showScreen(id){
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
   if(id==='admin')renderAdminPanel();
+  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];syncSessionBar(false)}
 }
 
 /* PLAYER SETUP — max 7 */
@@ -1068,19 +1122,103 @@ function endSession(){
   stopSessionTimer();
   stopSpeakTimer();
   clearNudgeTimer();
-  var totalSec=state.sessionSeconds;
-  var lines=['⏱ 세션 시간: '+fmtSessionTime(totalSec),''];
-  for(var i=0;i<state.playerCount;i++){
-    var name=state.playerNames[i]||('플레이어 '+(i+1));
-    lines.push(name+': '+fmtSec(state.speakTime[i]||0)+' (발언 '+((state.turnCount[i]||0))+'회)');
-  }
-  alert(lines.join('\n'));
   syncSessionBar(false);
-  state.sessionSeconds=0;
-  state.speakTime=[];
-  state.speakingPlayers=[];
-  state.turnCount=[];
-  showScreen('home');
+  showScreen('summary');
+  renderSummary();
+}
+function renderSummary(){
+  var totalSec=state.sessionSeconds;
+  var pc=state.playerCount;
+  // Hero time
+  document.getElementById('summaryTime').textContent=fmtSessionTime(totalSec);
+  // Badges
+  var bh='';
+  if(state.selectedTopic&&cats[state.selectedTopic]){
+    var cat=cats[state.selectedTopic];
+    bh+='<div class="summary-badge">'+cat.e+' '+cat.l+'</div>';
+  }
+  if(state.depth>=1&&state.depth<=3) bh+='<div class="summary-badge">'+depthLabels[state.depth]+'</div>';
+  document.getElementById('summaryBadges').innerHTML=bh;
+  // Build sorted player data
+  var players=[];var totalSpeak=0;
+  for(var i=0;i<pc;i++){
+    var st=state.speakTime[i]||0;totalSpeak+=st;
+    players.push({idx:i,name:state.playerNames[i]||('플레이어 '+(i+1)),speakTime:st,turns:state.turnCount[i]||0});
+  }
+  players.sort(function(a,b){return b.speakTime-a.speakTime});
+  var maxSpeak=players.length>0?players[0].speakTime:1;
+  if(maxSpeak===0)maxSpeak=1;
+  // Ring chart (canvas)
+  var canvas=document.getElementById('summaryRing');
+  if(canvas&&canvas.getContext){
+    var ctx=canvas.getContext('2d');
+    var sz=200,cx=100,cy=100,r=75,lw=14;
+    ctx.clearRect(0,0,sz,sz);
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=lw;ctx.stroke();
+    var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
+    var startA=-Math.PI/2;
+    if(totalSpeak>0){
+      for(var p=0;p<players.length;p++){
+        var frac=players[p].speakTime/totalSpeak;
+        var sweep=frac*Math.PI*2;
+        if(sweep<0.01)continue;
+        ctx.beginPath();ctx.arc(cx,cy,r,startA,startA+sweep);
+        ctx.strokeStyle=pColors[players[p].idx%pColors.length];
+        ctx.lineWidth=lw;ctx.lineCap='round';
+        ctx.shadowColor=pColors[players[p].idx%pColors.length];ctx.shadowBlur=10;
+        ctx.stroke();ctx.shadowBlur=0;
+        startA+=sweep;
+      }
+    }
+  }
+  document.getElementById('summaryRingLabel').innerHTML='<div style="font-size:26px;font-weight:700;color:var(--on-surface)">'+pc+'</div><div>PLAYERS</div>';
+  // Player stat rows
+  var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
+  var sh='';
+  for(var r2=0;r2<players.length;r2++){
+    var pl=players[r2];
+    var pct=totalSpeak>0?Math.round((pl.speakTime/totalSpeak)*100):0;
+    var barW=maxSpeak>0?Math.max(2,(pl.speakTime/maxSpeak)*100):2;
+    var rankIcon=r2===0?'👑':String(r2+1);
+    var delay=0.5+(r2*0.1);
+    var clr=pColors[pl.idx%pColors.length];
+    sh+='<div class="summary-player-row'+(r2===0?' top1':'')+'" style="animation:summaryFadeUp .6s ease-out '+delay+'s both">';
+    sh+='<div class="summary-rank">'+rankIcon+'</div>';
+    sh+='<div class="summary-player-info">';
+    sh+='<div class="summary-player-name">'+escapeHtml(pl.name)+'</div>';
+    sh+='<div class="summary-player-meta"><span>발언 '+pl.turns+'회</span><span>'+pct+'%</span></div>';
+    sh+='<div class="summary-bar-track"><div class="summary-bar-fill" style="width:0%;background:'+clr+'" data-target="'+barW+'"></div></div>';
+    sh+='</div>';
+    sh+='<div class="summary-player-time">'+fmtSec(pl.speakTime)+'</div>';
+    sh+='</div>';
+  }
+  document.getElementById('summaryStats').innerHTML=sh;
+  // Animate bars
+  setTimeout(function(){
+    var fills=document.querySelectorAll('.summary-bar-fill');
+    for(var f=0;f<fills.length;f++) fills[f].style.width=fills[f].getAttribute('data-target')+'%';
+  },100);
+  // Insight
+  var ih='<span class="material-symbols-outlined">auto_awesome</span>';
+  if(totalSpeak===0){ih+='아직 발언 기록이 없습니다'}
+  else{
+    var pcts=[];for(var b=0;b<players.length;b++) pcts.push(players[b].speakTime/totalSpeak);
+    var mean=1/pc;var variance=0;
+    for(var v=0;v<pcts.length;v++) variance+=(pcts[v]-mean)*(pcts[v]-mean);
+    var stddev=Math.sqrt(variance/pc);
+    if(stddev<0.05) ih+='완벽한 균형! 모두가 고르게 참여했습니다';
+    else if(stddev<0.1) ih+='좋은 균형의 대화였습니다';
+    else{
+      var top=players[0];var topPct=Math.round((top.speakTime/totalSpeak)*100);
+      ih+='가장 활발한 대화: '+escapeHtml(top.name)+' ('+topPct+'%)';
+    }
+  }
+  document.getElementById('summaryInsight').innerHTML=ih;
+}
+function restartSession(){
+  state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];
+  showScreen('staging');
+  startSessionTimer();
 }
 /* Keyboard shortcut: 1~7 toggles speaker on staging & gacha screens */
 document.addEventListener('keydown',function(e){
