@@ -725,6 +725,13 @@ body::after{
 
       <!-- Question List -->
       <div class="admin-q-list" id="adminQuestionList"></div>
+
+      <!-- Session History (admin only) -->
+      <div id="adminHistory" style="display:none;width:100%;margin-top:24px;border-top:1px solid var(--outline-dim);padding-top:20px">
+        <div class="admin-title" style="font-size:18px">세션 히스토리</div>
+        <div id="adminHistoryContent" style="width:100%"></div>
+        <div id="adminHistoryCommits" style="width:100%"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -755,7 +762,6 @@ body::after{
     </div>
     <div class="summary-actions">
       <button class="btn-primary" onclick="restartSession()"><span class="material-symbols-outlined">replay</span>NEW SESSION</button>
-      <button class="btn-secondary" onclick="stopCommitPoll();showScreen('history')"><span class="material-symbols-outlined">bar_chart</span>성장 기록</button>
       <button class="btn-ghost" onclick="showScreen('home')"><span class="material-symbols-outlined">home</span>HOME</button>
     </div>
   </div>
@@ -775,23 +781,6 @@ body::after{
   </div>
 </section>
 
-<!-- SCREEN: HISTORY DASHBOARD -->
-<section id="screen-history" class="screen">
-  <div class="content">
-    <div class="header">
-      <div class="header-logo"><span class="material-symbols-outlined">sports_esports</span>KTALK TALK</div>
-      <span class="material-symbols-outlined" style="color:var(--on-surface-dim);cursor:pointer" onclick="showScreen('home')">close</span>
-    </div>
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--on-surface)">성장 기록</div>
-    </div>
-    <div id="historyContent" style="width:100%;max-width:520px"></div>
-    <div id="historyCommits" style="width:100%;max-width:520px"></div>
-    <div style="margin-top:20px;width:100%;max-width:480px">
-      <button class="btn-ghost" onclick="showScreen('home')" style="width:100%"><span class="material-symbols-outlined">home</span>HOME</button>
-    </div>
-  </div>
-</section>
 
 <!-- SLOT MACHINE OVERLAY -->
 <div class="slot-overlay" id="slotOverlay">
@@ -939,7 +928,7 @@ var qs=[
 var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0,sessionId:null,healthScore:null};
 
 /* SCREEN TRANSITION */
-var screenIds=['home','setup','names','topic','staging','gacha','admin','summary','commit','history'];
+var screenIds=['home','setup','names','topic','staging','gacha','admin','summary','commit'];
 function showScreen(id){
   screenIds.forEach(function(s){var el=document.getElementById('screen-'+s);el.classList.remove('active');el.style.display='none'});
   var t=document.getElementById('screen-'+id);
@@ -954,7 +943,6 @@ function showScreen(id){
   if(id==='staging')renderStaging();
   if(id==='admin')renderAdminPanel();
   if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll()}
-  if(id==='history')loadHistory();
 }
 
 /* PLAYER SETUP — max 7 */
@@ -1479,7 +1467,7 @@ function loadHistory(){
   sb.from('sessions').select('*').order('created_at',{ascending:false}).limit(20).then(function(res){
     if(res.error||!res.data){return}
     var sessions=res.data;
-    var el=document.getElementById('historyContent');
+    var el=document.getElementById('adminHistoryContent');
     if(!el) return;
     var h='';
     // Score trend chart (simple ASCII-style with divs)
@@ -1522,7 +1510,7 @@ function loadHistory(){
           if(c.action_item) ch+='<span class="hcc-action">'+escapeHtml(c.action_item)+'</span>';
           ch+='</div>';
         });
-        var commitArea=document.getElementById('historyCommits');
+        var commitArea=document.getElementById('adminHistoryCommits');
         if(commitArea) commitArea.innerHTML=ch;
       });
     }
@@ -1774,8 +1762,11 @@ function adminLogin(){
   adminSession=true;
   document.getElementById('adminAuth').style.display='none';
   document.getElementById('btnAddQ').style.display='flex';
+  var histEl=document.getElementById('adminHistory');
+  if(histEl) histEl.style.display='block';
   showAdminStatus('로그인 성공','ok');
   renderAdminPanel();
+  loadHistory();
 }
 
 function renderAdminPanel(){
