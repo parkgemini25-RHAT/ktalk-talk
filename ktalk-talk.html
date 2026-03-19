@@ -260,6 +260,26 @@ body::after{
 }
 .gacha-actions{display:flex;gap:12px;margin-top:8px;width:100%;max-width:520px}
 .gacha-actions .btn-secondary,.gacha-actions .btn-ghost{flex:1}
+/* SESSION BAR */
+.session-bar{
+  width:100%;max-width:520px;margin-top:auto;padding-top:16px;
+  display:flex;align-items:center;gap:12px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.session-timer{
+  display:flex;align-items:center;gap:6px;
+  font-family:'Orbitron',sans-serif;font-size:16px;color:var(--on-surface-dim);
+  letter-spacing:1px;
+}
+.session-timer .material-symbols-outlined{font-size:18px;color:var(--secondary)}
+.session-timer .session-label{font-size:11px;color:var(--on-surface-dim);letter-spacing:1px;font-family:'Noto Sans KR',sans-serif}
+.btn-end-session{
+  margin-left:auto;padding:6px 14px;border-radius:8px;
+  background:rgba(255,0,127,0.15);border:1px solid var(--primary);
+  color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;
+  letter-spacing:1px;transition:all .2s;
+}
+.btn-end-session:hover{background:rgba(255,0,127,0.3);box-shadow:0 0 12px rgba(255,0,127,0.3)}
 /* DEPTH SELECTOR */
 .depth-selector{width:100%;max-width:560px;margin-bottom:20px;text-align:center}
 .depth-label{font-size:13px;color:var(--on-surface-dim);margin-bottom:8px;letter-spacing:1px;font-weight:600}
@@ -538,6 +558,13 @@ body::after{
     <div class="staging-actions">
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
     </div>
+    <div class="session-bar" id="stagingSessionBar" style="display:none">
+      <div class="session-timer">
+        <span class="material-symbols-outlined">timer</span>
+        <div><div class="session-label">SESSION</div><span id="stagingSessionTime">0:00:00</span></div>
+      </div>
+      <button class="btn-end-session" onclick="endSession()">세션 종료</button>
+    </div>
   </div>
 </section>
 
@@ -556,6 +583,13 @@ body::after{
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
       <button class="btn-secondary" onclick="bumpDepth()"><span class="material-symbols-outlined">arrow_upward</span>깊이+</button>
       <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
+    </div>
+    <div class="session-bar" id="gachaSessionBar" style="display:none">
+      <div class="session-timer">
+        <span class="material-symbols-outlined">timer</span>
+        <div><div class="session-label">SESSION</div><span id="gachaSessionTime">0:00:00</span></div>
+      </div>
+      <button class="btn-end-session" onclick="endSession()">세션 종료</button>
     </div>
   </div>
 </section>
@@ -773,7 +807,7 @@ var qs=[
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0};
 
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin'];
@@ -906,6 +940,7 @@ function runSlot(callback){
 function startSlotFromTopic(){
   if(!state.selectedTopic)return;
   showScreen('staging');
+  startSessionTimer();
 }
 
 /* Staging functions */
@@ -1008,6 +1043,44 @@ function startSpeakTimer(){
 }
 function stopSpeakTimer(){
   if(state.speakTimer){clearInterval(state.speakTimer);state.speakTimer=null}
+}
+/* SESSION TIMER */
+function fmtSessionTime(s){var h=Math.floor(s/3600);var m=Math.floor((s%3600)/60);var ss=s%60;return h+':'+(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss}
+function startSessionTimer(){
+  if(state.sessionTimer)return;
+  state.sessionSeconds=0;
+  syncSessionBar(true);
+  state.sessionTimer=setInterval(function(){
+    state.sessionSeconds++;
+    var t=fmtSessionTime(state.sessionSeconds);
+    var ids=['stagingSessionTime','gachaSessionTime'];
+    for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)el.textContent=t}
+  },1000);
+}
+function stopSessionTimer(){
+  if(state.sessionTimer){clearInterval(state.sessionTimer);state.sessionTimer=null}
+}
+function syncSessionBar(show){
+  var ids=['stagingSessionBar','gachaSessionBar'];
+  for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)el.style.display=show?'flex':'none'}
+}
+function endSession(){
+  stopSessionTimer();
+  stopSpeakTimer();
+  clearNudgeTimer();
+  var totalSec=state.sessionSeconds;
+  var lines=['⏱ 세션 시간: '+fmtSessionTime(totalSec),''];
+  for(var i=0;i<state.playerCount;i++){
+    var name=state.playerNames[i]||('플레이어 '+(i+1));
+    lines.push(name+': '+fmtSec(state.speakTime[i]||0)+' (발언 '+((state.turnCount[i]||0))+'회)');
+  }
+  alert(lines.join('\n'));
+  syncSessionBar(false);
+  state.sessionSeconds=0;
+  state.speakTime=[];
+  state.speakingPlayers=[];
+  state.turnCount=[];
+  showScreen('home');
 }
 /* Keyboard shortcut: 1~7 toggles speaker on staging & gacha screens */
 document.addEventListener('keydown',function(e){
