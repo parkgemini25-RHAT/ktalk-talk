@@ -289,6 +289,21 @@ body::after{
 .participant-chip .p-bar-fill{height:100%;border-radius:2px;background:var(--secondary);transition:width .3s}
 .participant-chip.active .p-bar-fill{background:var(--primary-light)}
 .participation-hint{font-size:13px;color:var(--primary-light);text-align:center;min-height:20px;margin-bottom:4px}
+/* SPEAKER TRACKER */
+.speaker-tracker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px;margin:12px 0}
+.speaker-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:var(--surface);border:2px solid var(--outline-dim);cursor:pointer;transition:all .2s;user-select:none;min-width:72px}
+.speaker-btn .s-num{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:var(--on-surface-dim);letter-spacing:1px}
+.speaker-btn .s-name{font-size:13px;font-weight:600;color:var(--on-surface-dim);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.speaker-btn .s-time{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--secondary);letter-spacing:1px}
+.speaker-btn .s-bar{width:100%;height:3px;border-radius:2px;background:var(--outline-dim);overflow:hidden;margin-top:2px}
+.speaker-btn .s-bar-fill{height:100%;border-radius:2px;background:var(--secondary);transition:width .5s}
+.speaker-btn.speaking{border-color:var(--primary);background:rgba(255,0,127,0.08);box-shadow:0 0 16px rgba(255,0,127,0.3)}
+.speaker-btn.speaking .s-name{color:var(--primary-light)}
+.speaker-btn.speaking .s-time{color:var(--primary-light)}
+.speaker-btn.speaking .s-bar-fill{background:var(--primary-light)}
+.speaker-btn.speaking .s-num{color:var(--primary-light)}
+@keyframes speakPulse{0%,100%{box-shadow:0 0 8px rgba(255,0,127,0.3)}50%{box-shadow:0 0 20px rgba(255,0,127,0.5)}}
+.speaker-btn.speaking{animation:speakPulse 1.5s ease infinite}
 /* STAGING NUDGE */
 .staging-nudge{width:100%;max-width:480px;min-height:36px;text-align:center;padding:10px 16px;font-size:14px;color:var(--secondary);opacity:0;transition:opacity .5s ease}
 .staging-nudge.show{opacity:1}
@@ -531,8 +546,9 @@ body::after{
     <div class="staging-visual">
       <div class="staging-emoji">🎤</div>
       <div class="staging-msg">대화가 진행 중입니다</div>
-      <div class="staging-hint">부스팅이 필요할 때 카드를 뽑아보세요</div>
+      <div class="staging-hint">발언자를 탭하여 발언 시간을 기록하세요</div>
     </div>
+    <div class="speaker-tracker" id="speakerTracker"></div>
     <div class="staging-nudge" id="stagingNudge"></div>
     <div class="staging-actions">
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
@@ -704,7 +720,7 @@ var qs=[
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayer:-1,speakTimer:null};
 
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin'];
@@ -715,7 +731,7 @@ function showScreen(id){
   document.querySelectorAll('.nav-item').forEach(function(n,i){
     n.classList.toggle('active',(id==='home'&&i===0)||((id==='gacha'||id==='staging')&&i===1));
   });
-  if(id!=='staging')clearNudgeTimer();
+  if(id!=='staging'){clearNudgeTimer();stopSpeakTimer()}
   if(id==='setup')renderPlayerIcons();
   if(id==='names')renderNameInputs();
   if(id==='staging')renderStaging();
@@ -754,6 +770,8 @@ function saveNames(){
     state.playerNames.push(v||'플레이어 '+(i+1));
   }
   state.turnCount=new Array(state.playerCount).fill(0);
+  state.speakTime=new Array(state.playerCount).fill(0);
+  state.speakingPlayer=-1;
   showScreen('topic');
 }
 
@@ -848,10 +866,56 @@ function bumpDepth(){
 function renderStaging(){
   var c=cats[state.selectedTopic];
   document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l+' <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
+  renderSpeakerTracker();
   startNudgeTimer();
+}
+function fmtSec(s){var m=Math.floor(s/60);var ss=s%60;return m+':'+(ss<10?'0':'')+ss}
+function renderSpeakerTracker(){
+  var el=document.getElementById('speakerTracker');
+  if(!el)return;
+  if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
+  var maxT=Math.max.apply(null,state.speakTime)||1;
+  var h='';
+  for(var i=0;i<state.playerCount;i++){
+    var name=state.playerNames[i]||('플레이어 '+(i+1));
+    var isSpeaking=(state.speakingPlayer===i);
+    var pct=Math.max(5,(state.speakTime[i]/maxT)*100);
+    h+='<div class="speaker-btn'+(isSpeaking?' speaking':'')+'" onclick="toggleSpeaker('+i+')">';
+    h+='<div class="s-num">'+(i+1)+'</div>';
+    h+='<div class="s-name">'+escapeHtml(name)+'</div>';
+    h+='<div class="s-time">'+fmtSec(state.speakTime[i])+'</div>';
+    h+='<div class="s-bar"><div class="s-bar-fill" style="width:'+pct+'%"></div></div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function toggleSpeaker(idx){
+  if(state.speakingPlayer===idx){
+    stopSpeakTimer();
+    state.speakingPlayer=-1;
+  }else{
+    stopSpeakTimer();
+    state.speakingPlayer=idx;
+    state.turnCount[idx]++;
+    startSpeakTimer();
+  }
+  renderSpeakerTracker();
+}
+function startSpeakTimer(){
+  stopSpeakTimer();
+  state.speakTimer=setInterval(function(){
+    if(state.speakingPlayer>=0){
+      state.speakTime[state.speakingPlayer]++;
+      renderSpeakerTracker();
+    }
+  },1000);
+}
+function stopSpeakTimer(){
+  if(state.speakTimer){clearInterval(state.speakTimer);state.speakTimer=null}
 }
 function drawFromStaging(){
   clearNudgeTimer();
+  stopSpeakTimer();
   pickQuestion();
   runSlot(function(){
     showScreen('gacha');
@@ -895,36 +959,34 @@ function syncGachaTimer(){
 function renderParticipantGrid(){
   var el=document.getElementById('participantGrid');
   if(!el)return;
-  if(!state.turnCount.length) state.turnCount=new Array(state.playerCount).fill(0);
-  var maxT=Math.max.apply(null,state.turnCount)||1;
-  var minT=Math.min.apply(null,state.turnCount);
+  if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
+  var maxT=Math.max.apply(null,state.speakTime)||1;
+  var minT=Math.min.apply(null,state.speakTime);
+  var totalT=0;for(var k=0;k<state.speakTime.length;k++)totalT+=state.speakTime[k];
   var h='';
   for(var i=0;i<state.playerCount;i++){
     var name=state.playerNames[i]||('플레이어 '+(i+1));
     var isActive=(state.currentPlayer===i+1);
-    var isQuiet=(state.turnCount[i]===minT&&maxT-minT>=2);
-    var pct=Math.max(10,(state.turnCount[i]/maxT)*100);
+    var isQuiet=(totalT>30&&state.speakTime[i]===minT&&maxT-minT>=10);
+    var pct=Math.max(10,(state.speakTime[i]/maxT)*100);
     h+='<div class="participant-chip'+(isActive?' active':'')+(isQuiet?' quiet':'')+'" onclick="selectParticipant('+(i+1)+')">';
-    h+='<span>'+escapeHtml(name)+'</span>';
+    h+='<span>'+escapeHtml(name)+' <small style="opacity:.6">'+fmtSec(state.speakTime[i])+'</small></span>';
     h+='<div class="p-bar"><div class="p-bar-fill" style="width:'+pct+'%"></div></div>';
     h+='</div>';
   }
   el.innerHTML=h;
   var hintEl=document.getElementById('participationHint');
   if(hintEl){
-    if(maxT-minT>=2){
+    if(totalT>30&&maxT-minT>=10){
       var quietNames=[];
-      for(var j=0;j<state.turnCount.length;j++){
-        if(state.turnCount[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
+      for(var j=0;j<state.speakTime.length;j++){
+        if(state.speakTime[j]===minT) quietNames.push(state.playerNames[j]||('플레이어 '+(j+1)));
       }
-      hintEl.textContent='💡 '+quietNames.join(', ')+'님이 아직 발언이 적어요';
+      hintEl.textContent='💡 '+quietNames.join(', ')+'님의 발언 시간이 적어요';
     }else{hintEl.textContent=''}
   }
 }
 function selectParticipant(idx){
-  if(state.currentPlayer!==idx){
-    state.turnCount[state.currentPlayer-1]++;
-  }
   state.currentPlayer=idx;
   document.querySelectorAll('.participant-chip.glow').forEach(function(c){c.classList.remove('glow')});
   renderParticipantGrid();
@@ -976,6 +1038,7 @@ function renderGacha(){
 function backToStaging(){
   clearGachaTimer();
   showScreen('staging');
+  if(state.speakingPlayer>=0) startSpeakTimer();
 }
 
 /* SILENCE NUDGE */
