@@ -305,6 +305,26 @@ body::after{
 .qr-hint{font-size:13px;color:var(--on-surface-dim);margin-bottom:12px}
 .commit-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--surface-bright);color:var(--on-surface-dim);margin:3px}
 .commit-chip.done{color:var(--tertiary);background:rgba(57,255,20,.08)}
+/* CARDS RECAP */
+.cards-recap{width:100%;max-width:520px;margin-bottom:20px;animation:summaryFadeUp .8s ease-out .4s both}
+.cards-recap-title{font-size:13px;font-weight:700;color:var(--on-surface-dim);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-recap-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface);border-radius:10px;margin-bottom:6px;font-size:13px;color:var(--on-surface);border-left:3px solid var(--outline-dim)}
+.card-recap-num{font-size:11px;font-weight:700;color:var(--on-surface-dim);min-width:18px}
+.card-recap-text{flex:1;line-height:1.4}
+/* SESSION INTENSITY */
+.session-intensity{width:100%;max-width:520px;padding:16px;background:var(--surface);border-radius:16px;margin-bottom:20px;animation:summaryFadeUp .8s ease-out .5s both}
+.si-title{font-size:13px;font-weight:700;color:var(--on-surface-dim);letter-spacing:2px;margin-bottom:12px}
+.si-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.si-label{font-size:13px;color:var(--on-surface-dim);min-width:80px}
+.si-bar{flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
+.si-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.si-val{font-size:12px;font-weight:700;font-family:'Space Grotesk',sans-serif;min-width:50px;text-align:right;color:var(--on-surface)}
+/* QR ELEVATED */
+.qr-elevated{width:100%;max-width:520px;text-align:center;padding:28px 20px;background:var(--surface);border-radius:16px;margin-bottom:20px;border:2px solid rgba(0,240,255,0.15);animation:summaryFadeUp .8s ease-out .7s both}
+.qr-elevated-title{font-size:16px;font-weight:700;color:var(--on-surface);margin-bottom:4px}
+.qr-elevated-hint{font-size:13px;color:var(--on-surface-dim);margin-bottom:16px}
+.qr-elevated canvas{border-radius:12px;margin:0 auto 16px;display:block}
+.commit-counter{font-size:15px;font-weight:700;color:var(--secondary);margin-top:12px}
 .commit-count{font-size:12px;color:var(--on-surface-dim);margin-top:8px;font-weight:700}
 /* COMMIT FORM */
 .commit-label{display:block;font-size:13px;font-weight:700;color:var(--on-surface-dim);margin:14px 0 6px;letter-spacing:1px}
@@ -821,15 +841,25 @@ body::after{
       <div class="summary-time-label">TOTAL SESSION TIME</div>
       <div class="summary-badges" id="summaryBadges"></div>
     </div>
-    <div class="summary-ring-section">
-      <canvas id="summaryRing" width="200" height="200"></canvas>
-      <div class="summary-ring-label" id="summaryRingLabel"></div>
+    <!-- Cards Recap -->
+    <div class="cards-recap" id="cardsRecap"></div>
+    <!-- Session Intensity (always works) -->
+    <div class="session-intensity" id="sessionIntensity"></div>
+    <!-- Speaker tracking section (conditional) -->
+    <div id="speakerSection" style="display:none;width:100%;max-width:520px">
+      <div class="summary-ring-section">
+        <canvas id="summaryRing" width="200" height="200"></canvas>
+        <div class="summary-ring-label" id="summaryRingLabel"></div>
+      </div>
+      <div class="summary-stats" id="summaryStats"></div>
+      <div class="summary-insight" id="summaryInsight"></div>
     </div>
-    <div class="summary-stats" id="summaryStats"></div>
-    <div class="summary-insight" id="summaryInsight"></div>
+    <!-- Health Score -->
     <div class="summary-health" id="summaryHealthScore"></div>
-    <div class="summary-qr">
-      <div class="qr-hint">참여자분들, QR을 스캔하여 오늘의 다짐을 남겨주세요</div>
+    <!-- QR Commitment (elevated) -->
+    <div class="qr-elevated">
+      <div class="qr-elevated-title">📱 오늘의 다짐을 남겨주세요</div>
+      <div class="qr-elevated-hint">참여자분들, 핸드폰으로 스캔하면 다짐 페이지로 이동합니다</div>
       <div id="summaryQR"></div>
       <div id="commitStatus"></div>
     </div>
@@ -999,7 +1029,7 @@ var qs=[
 ];
 
 /* STATE */
-var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0,sessionId:null,healthScore:null};
+var state={playerCount:4,playerNames:[],selectedTopic:null,currentQuestion:null,lastIdx:-1,timer:null,timerSeconds:60,timerDefault:60,bbangPct:5,currentPlayer:1,depth:1,turnCount:[],nudgeTimer:null,nudgeCount:0,speakTime:[],speakingPlayers:[],speakTimer:null,sessionTimer:null,sessionSeconds:0,sessionId:null,healthScore:null,drawnCards:[],reDrawCount:0};
 
 /* SCREEN TRANSITION */
 var screenIds=['home','setup','names','topic','staging','gacha','admin','summary','commit'];
@@ -1025,7 +1055,7 @@ function showScreen(id){
     renderAdminPanel();
     if(adminSession) loadHistory();
   }
-  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll();stopMic()}
+  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;state.drawnCards=[];state.reDrawCount=0;syncSessionBar(false);stopCommitPoll();stopMic()}
 }
 
 /* PLAYER SETUP — max 7 */
@@ -1414,6 +1444,7 @@ function endSession(){
 function renderSummary(){
   var totalSec=state.sessionSeconds;
   var pc=state.playerCount;
+  var hasTracking=adminSettings.speakerTracking;
   // Hero time
   document.getElementById('summaryTime').textContent=fmtSessionTime(totalSec);
   // Badges
@@ -1423,85 +1454,125 @@ function renderSummary(){
     bh+='<div class="summary-badge">'+cat.e+' '+cat.l+'</div>';
   }
   if(state.depth>=1&&state.depth<=3) bh+='<div class="summary-badge">'+depthLabels[state.depth]+'</div>';
+  bh+='<div class="summary-badge">'+pc+'명</div>';
+  bh+='<div class="summary-badge">'+state.drawnCards.length+'장 사용</div>';
+  if(state.reDrawCount>0) bh+='<div class="summary-badge">'+state.reDrawCount+'회 재뽑기</div>';
   document.getElementById('summaryBadges').innerHTML=bh;
-  // Build sorted player data
-  var players=[];var totalSpeak=0;
-  for(var i=0;i<pc;i++){
-    var st=state.speakTime[i]||0;totalSpeak+=st;
-    players.push({idx:i,name:state.playerNames[i]||('플레이어 '+(i+1)),speakTime:st,turns:state.turnCount[i]||0});
+
+  // Cards Recap
+  var cr=document.getElementById('cardsRecap');
+  if(cr){
+    var ch='<div class="cards-recap-title"><span class="material-symbols-outlined" style="font-size:18px">style</span>오늘 사용한 카드 ('+state.drawnCards.length+'장)</div>';
+    state.drawnCards.forEach(function(q,i){
+      var c2=cats[q.c];
+      var text=q.c==='bbang'?('🎊 '+q.bm):q.t.replace(/\n/g,' ');
+      ch+='<div class="card-recap-item" style="border-left-color:'+(c2?c2.c:'var(--outline-dim)')+'">';
+      ch+='<span class="card-recap-num">'+(i+1)+'</span>';
+      ch+='<span class="card-recap-text">'+escapeHtml(text)+'</span>';
+      ch+='</div>';
+    });
+    cr.innerHTML=ch;
   }
-  players.sort(function(a,b){return b.speakTime-a.speakTime});
-  var maxSpeak=players.length>0?players[0].speakTime:1;
-  if(maxSpeak===0)maxSpeak=1;
-  // Ring chart (canvas)
-  var canvas=document.getElementById('summaryRing');
-  if(canvas&&canvas.getContext){
-    var ctx=canvas.getContext('2d');
-    var sz=200,cx=100,cy=100,r=75,lw=14;
-    ctx.clearRect(0,0,sz,sz);
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=lw;ctx.stroke();
-    var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
-    var startA=-Math.PI/2;
-    if(totalSpeak>0){
-      for(var p=0;p<players.length;p++){
-        var frac=players[p].speakTime/totalSpeak;
-        var sweep=frac*Math.PI*2;
-        if(sweep<0.01)continue;
-        ctx.beginPath();ctx.arc(cx,cy,r,startA,startA+sweep);
-        ctx.strokeStyle=pColors[players[p].idx%pColors.length];
-        ctx.lineWidth=lw;ctx.lineCap='round';
-        ctx.shadowColor=pColors[players[p].idx%pColors.length];ctx.shadowBlur=10;
-        ctx.stroke();ctx.shadowBlur=0;
-        startA+=sweep;
+
+  // Session Intensity (always works without tracking)
+  var si=document.getElementById('sessionIntensity');
+  if(si){
+    var cardsPer10m=totalSec>0?Math.round(state.drawnCards.length/(totalSec/600)*10)/10:0;
+    var depthPct=[0,33,66,100][state.depth]||33;
+    var sih='<div class="si-title">📊 세션 강도</div>';
+    var rows=[
+      {l:'카드 사용',v:Math.min(100,state.drawnCards.length*10),t:state.drawnCards.length+'장',c:'var(--secondary)'},
+      {l:'대화 깊이',v:depthPct,t:depthLabels[state.depth],c:'var(--tertiary)'},
+      {l:'재뽑기',v:Math.min(100,state.reDrawCount*20),t:state.reDrawCount+'회',c:'#FFD700'}
+    ];
+    rows.forEach(function(r){
+      sih+='<div class="si-row"><span class="si-label">'+r.l+'</span><div class="si-bar"><div class="si-fill" style="width:'+r.v+'%;background:'+r.c+'"></div></div><span class="si-val">'+r.t+'</span></div>';
+    });
+    si.innerHTML=sih;
+  }
+
+  // Speaker tracking section (conditional)
+  var speakerEl=document.getElementById('speakerSection');
+  if(speakerEl){
+    var totalSpeak=0;
+    for(var k=0;k<pc;k++) totalSpeak+=(state.speakTime[k]||0);
+    if(hasTracking&&totalSpeak>0){
+      speakerEl.style.display='flex';
+      speakerEl.style.flexDirection='column';
+      speakerEl.style.alignItems='center';
+      var players=[];
+      for(var i=0;i<pc;i++){
+        var st=state.speakTime[i]||0;
+        players.push({idx:i,name:state.playerNames[i]||('플레이어 '+(i+1)),speakTime:st,turns:state.turnCount[i]||0});
       }
+      players.sort(function(a,b){return b.speakTime-a.speakTime});
+      var maxSpeak=players[0].speakTime||1;
+      // Ring chart
+      var canvas=document.getElementById('summaryRing');
+      if(canvas&&canvas.getContext){
+        var ctx=canvas.getContext('2d');
+        var sz=200,cx=100,cy=100,r=75,lw=14;
+        ctx.clearRect(0,0,sz,sz);
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=lw;ctx.stroke();
+        var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
+        var startA=-Math.PI/2;
+        for(var p=0;p<players.length;p++){
+          var frac=players[p].speakTime/totalSpeak;
+          var sweep=frac*Math.PI*2;
+          if(sweep<0.01)continue;
+          ctx.beginPath();ctx.arc(cx,cy,r,startA,startA+sweep);
+          ctx.strokeStyle=pColors[players[p].idx%pColors.length];
+          ctx.lineWidth=lw;ctx.lineCap='round';
+          ctx.shadowColor=pColors[players[p].idx%pColors.length];ctx.shadowBlur=10;
+          ctx.stroke();ctx.shadowBlur=0;
+          startA+=sweep;
+        }
+      }
+      document.getElementById('summaryRingLabel').innerHTML='<div style="font-size:26px;font-weight:700;color:var(--on-surface)">'+pc+'</div><div>PLAYERS</div>';
+      // Player rows
+      var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
+      var sh='';
+      for(var r2=0;r2<players.length;r2++){
+        var pl=players[r2];
+        var pct=Math.round((pl.speakTime/totalSpeak)*100);
+        var barW=Math.max(2,(pl.speakTime/maxSpeak)*100);
+        var rankIcon=r2===0?'👑':String(r2+1);
+        var clr=pColors[pl.idx%pColors.length];
+        sh+='<div class="summary-player-row'+(r2===0?' top1':'')+'" style="animation:summaryFadeUp .6s ease-out '+(0.5+r2*0.1)+'s both">';
+        sh+='<div class="summary-rank">'+rankIcon+'</div>';
+        sh+='<div class="summary-player-info">';
+        sh+='<div class="summary-player-name">'+escapeHtml(pl.name)+'</div>';
+        sh+='<div class="summary-player-meta"><span>발언 '+pl.turns+'회</span><span>'+pct+'%</span></div>';
+        sh+='<div class="summary-bar-track"><div class="summary-bar-fill" style="width:0%;background:'+clr+'" data-target="'+barW+'"></div></div>';
+        sh+='</div>';
+        sh+='<div class="summary-player-time">'+fmtSec(pl.speakTime)+'</div>';
+        sh+='</div>';
+      }
+      document.getElementById('summaryStats').innerHTML=sh;
+      setTimeout(function(){
+        var fills=document.querySelectorAll('.summary-bar-fill');
+        for(var f=0;f<fills.length;f++) fills[f].style.width=fills[f].getAttribute('data-target')+'%';
+      },100);
+      // Insight
+      var ih='<span class="material-symbols-outlined">auto_awesome</span>';
+      var pcts2=[];for(var b=0;b<players.length;b++) pcts2.push(players[b].speakTime/totalSpeak);
+      var mean2=1/pc;var variance2=0;
+      for(var v2=0;v2<pcts2.length;v2++) variance2+=(pcts2[v2]-mean2)*(pcts2[v2]-mean2);
+      var stddev2=Math.sqrt(variance2/pc);
+      if(stddev2<0.05) ih+='완벽한 균형! 모두가 고르게 참여했습니다';
+      else if(stddev2<0.1) ih+='좋은 균형의 대화였습니다';
+      else{
+        var top=players[0];var topPct=Math.round((top.speakTime/totalSpeak)*100);
+        ih+='가장 활발한 대화: '+escapeHtml(top.name)+' ('+topPct+'%)';
+      }
+      document.getElementById('summaryInsight').innerHTML=ih;
+    }else{
+      speakerEl.style.display='none';
     }
   }
-  document.getElementById('summaryRingLabel').innerHTML='<div style="font-size:26px;font-weight:700;color:var(--on-surface)">'+pc+'</div><div>PLAYERS</div>';
-  // Player stat rows
-  var pColors=['#FF007F','#00F0FF','#39FF14','#C77DFF','#FF6B35','#FFD700','#00CED1'];
-  var sh='';
-  for(var r2=0;r2<players.length;r2++){
-    var pl=players[r2];
-    var pct=totalSpeak>0?Math.round((pl.speakTime/totalSpeak)*100):0;
-    var barW=maxSpeak>0?Math.max(2,(pl.speakTime/maxSpeak)*100):2;
-    var rankIcon=r2===0?'👑':String(r2+1);
-    var delay=0.5+(r2*0.1);
-    var clr=pColors[pl.idx%pColors.length];
-    sh+='<div class="summary-player-row'+(r2===0?' top1':'')+'" style="animation:summaryFadeUp .6s ease-out '+delay+'s both">';
-    sh+='<div class="summary-rank">'+rankIcon+'</div>';
-    sh+='<div class="summary-player-info">';
-    sh+='<div class="summary-player-name">'+escapeHtml(pl.name)+'</div>';
-    sh+='<div class="summary-player-meta"><span>발언 '+pl.turns+'회</span><span>'+pct+'%</span></div>';
-    sh+='<div class="summary-bar-track"><div class="summary-bar-fill" style="width:0%;background:'+clr+'" data-target="'+barW+'"></div></div>';
-    sh+='</div>';
-    sh+='<div class="summary-player-time">'+fmtSec(pl.speakTime)+'</div>';
-    sh+='</div>';
-  }
-  document.getElementById('summaryStats').innerHTML=sh;
-  // Animate bars
-  setTimeout(function(){
-    var fills=document.querySelectorAll('.summary-bar-fill');
-    for(var f=0;f<fills.length;f++) fills[f].style.width=fills[f].getAttribute('data-target')+'%';
-  },100);
-  // Insight
-  var ih='<span class="material-symbols-outlined">auto_awesome</span>';
-  if(totalSpeak===0){ih+='아직 발언 기록이 없습니다'}
-  else{
-    var pcts=[];for(var b=0;b<players.length;b++) pcts.push(players[b].speakTime/totalSpeak);
-    var mean=1/pc;var variance=0;
-    for(var v=0;v<pcts.length;v++) variance+=(pcts[v]-mean)*(pcts[v]-mean);
-    var stddev=Math.sqrt(variance/pc);
-    if(stddev<0.05) ih+='완벽한 균형! 모두가 고르게 참여했습니다';
-    else if(stddev<0.1) ih+='좋은 균형의 대화였습니다';
-    else{
-      var top=players[0];var topPct=Math.round((top.speakTime/totalSpeak)*100);
-      ih+='가장 활발한 대화: '+escapeHtml(top.name)+' ('+topPct+'%)';
-    }
-  }
-  document.getElementById('summaryInsight').innerHTML=ih;
 }
 function restartSession(){
-  state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;
+  state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;state.drawnCards=[];state.reDrawCount=0;
   showScreen('staging');
   startSessionTimer();
 }
@@ -1921,6 +1992,7 @@ function drawFromStaging(){
 
 /* RE-DRAW from gacha */
 function reDraw(){
+  state.reDrawCount++;
   resetPickOrder();
   pickQuestion();
   runSlot(function(){
@@ -1934,6 +2006,7 @@ function pickQuestion(){
   if(bbangPool.length&&Math.random()*100<state.bbangPct){
     var idx=Math.floor(Math.random()*bbangPool.length);
     state.currentQuestion=bbangPool[idx];
+    state.drawnCards.push(state.currentQuestion);
     return;
   }
   var pool=qs.filter(function(q){return q.c===state.selectedTopic&&(q.d||1)<=state.depth});
@@ -1943,6 +2016,7 @@ function pickQuestion(){
   while(idx2===state.lastIdx&&pool.length>1&&tries<20);
   state.lastIdx=idx2;
   state.currentQuestion=pool[idx2];
+  state.drawnCards.push(state.currentQuestion);
 }
 
 /* GACHA RENDER */
