@@ -668,12 +668,6 @@ body::after{
       <div class="staging-msg">대화가 진행 중입니다</div>
       <div class="staging-hint">발언자를 클릭하거나 숫자키(1~7)로 기록하세요</div>
     </div>
-    <!-- Pick Order -->
-    <div class="pick-area">
-      <button class="btn-secondary" onclick="pickNextSpeaker()" id="btnPickSpeaker" style="width:100%"><span class="material-symbols-outlined">casino</span>🎲 순서 뽑기</button>
-      <div class="pick-cards" id="pickCards"></div>
-      <div class="pick-result" id="pickResult"></div>
-    </div>
     <div class="speaker-tracker" id="speakerTracker"></div>
     <div class="staging-nudge" id="stagingNudge"></div>
     <div class="staging-topic-picker" id="stagingTopicPicker"></div>
@@ -699,6 +693,12 @@ body::after{
     </div>
     <div class="gacha-tabs" id="gachaTabs"></div>
     <div id="questionArea"></div>
+    <!-- Pick Order -->
+    <div class="pick-area">
+      <button class="btn-secondary" onclick="pickNextSpeaker()" id="btnPickSpeaker2" style="width:100%"><span class="material-symbols-outlined">casino</span>🎲 순서 뽑기</button>
+      <div class="pick-cards" id="pickCards2"></div>
+      <div class="pick-result" id="pickResult2"></div>
+    </div>
     <div class="speaker-tracker" id="gachaSpeakerTracker"></div>
     <div class="participation-hint" id="gachaParticipationHint"></div>
     <div class="gacha-actions" style="margin-top:12px">
@@ -1159,7 +1159,7 @@ function bumpDepthDown(){
 var pickedOrder=[];
 var pickAnimTimer=null;
 function renderPickCards(){
-  var el=document.getElementById('pickCards');
+  var el=document.getElementById('pickCards2');
   if(!el) return;
   var h='';
   for(var i=0;i<state.playerCount;i++){
@@ -1172,7 +1172,7 @@ function renderPickCards(){
     h+='</div>';
   }
   el.innerHTML=h;
-  var btn=document.getElementById('btnPickSpeaker');
+  var btn=document.getElementById('btnPickSpeaker2');
   if(btn){
     if(pickedOrder.length>=state.playerCount){
       btn.innerHTML='<span class="material-symbols-outlined">refresh</span>순서 초기화';
@@ -1195,7 +1195,6 @@ function pickNextSpeaker(){
   var maxCount=15;
   pickAnimTimer=setInterval(function(){
     count++;
-    // clear all picking
     for(var j=0;j<state.playerCount;j++){
       var c=document.getElementById('pickCard-'+j);
       if(c) c.classList.remove('picking');
@@ -1205,15 +1204,13 @@ function pickNextSpeaker(){
       pickAnimTimer=null;
       pickedOrder.push(chosen);
       renderPickCards();
-      // highlight just-picked
       var card=document.getElementById('pickCard-'+chosen);
       if(card){card.classList.add('just-picked');setTimeout(function(){card.classList.remove('just-picked')},1500)}
-      var resEl=document.getElementById('pickResult');
+      var resEl=document.getElementById('pickResult2');
       var name=state.playerNames[chosen]||('P'+(chosen+1));
       if(resEl) resEl.textContent=pickedOrder.length+'번째: '+name+'!';
       return;
     }
-    // random highlight
     var rnd=remaining[Math.floor(Math.random()*remaining.length)];
     var rc=document.getElementById('pickCard-'+rnd);
     if(rc) rc.classList.add('picking');
@@ -1223,7 +1220,7 @@ function resetPickOrder(){
   if(pickAnimTimer){clearInterval(pickAnimTimer);pickAnimTimer=null}
   pickedOrder=[];
   renderPickCards();
-  var resEl=document.getElementById('pickResult');
+  var resEl=document.getElementById('pickResult2');
   if(resEl) resEl.textContent='';
 }
 
@@ -1231,7 +1228,6 @@ function renderStaging(){
   var c=cats[state.selectedTopic];
   document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l+' <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
   renderStagingTopicPicker();
-  renderPickCards();
   renderSpeakerTracker();
   lastBalanceNudgeAt=0;
   startNudgeTimer();
@@ -1953,6 +1949,7 @@ function renderGachaTabs(){
 }
 function renderGacha(){
   renderGachaTabs();
+  renderPickCards();
   renderSpeakerTracker();
   var q=state.currentQuestion;if(!q)return;
   var cat=cats[q.c],a=document.getElementById('questionArea');
