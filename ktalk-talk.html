@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbitron:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/dist/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1599,11 +1599,11 @@ function calcHealthScore(){
   return{total:totalScore,balance:Math.round(balanceScore),depth:Math.round(depthScore),density:Math.round(densityScore),coverage:Math.round(coverageScore),commitment:0};
 }
 function scoreGrade(s){
-  if(s>=85) return{grade:'S',label:'EXCELLENT',color:'var(--primary)'};
-  if(s>=70) return{grade:'A',label:'GREAT',color:'var(--secondary)'};
-  if(s>=55) return{grade:'B',label:'GOOD',color:'var(--tertiary)'};
-  if(s>=40) return{grade:'C',label:'GROWING',color:'#FFD700'};
-  return{grade:'D',label:'WARMING UP',color:'var(--on-surface-dim)'};
+  if(s>=85) return{grade:'🌟',label:'완벽한 대화였어요!',color:'var(--primary)'};
+  if(s>=70) return{grade:'✨',label:'훌륭한 시간이었어요!',color:'var(--secondary)'};
+  if(s>=55) return{grade:'💪',label:'좋은 대화를 나눴어요!',color:'var(--tertiary)'};
+  if(s>=40) return{grade:'🌱',label:'함께 성장하고 있어요!',color:'#FFD700'};
+  return{grade:'🔥',label:'좋은 시작이에요!',color:'var(--on-surface-dim)'};
 }
 function saveSession(){
   var hs=calcHealthScore();
@@ -1641,12 +1641,12 @@ function renderSummaryExtras(){
   var hsEl=document.getElementById('summaryHealthScore');
   if(hsEl){
     var hh='<div class="hs-header">';
-    hh+='<div class="hs-number" style="color:'+g.color+'">'+hs.total+'</div>';
-    hh+='<div class="hs-grade" style="border-color:'+g.color+';color:'+g.color+'">'+g.grade+' '+g.label+'</div>';
+    hh+='<div class="hs-number" style="color:'+g.color+';font-size:32px">'+g.grade+'</div>';
+    hh+='<div class="hs-grade" style="border-color:'+g.color+';color:'+g.color+'">'+g.label+'</div>';
     hh+='</div>';
-    var metrics=[{l:'Balance',v:hs.balance},{l:'Depth',v:hs.depth},{l:'Density',v:hs.density},{l:'Coverage',v:hs.coverage},{l:'Commit',v:hs.commitment}];
+    var metrics=[{l:'균형',v:hs.balance},{l:'깊이',v:hs.depth},{l:'밀도',v:hs.density},{l:'참여',v:hs.coverage},{l:'다짐',v:hs.commitment}];
     metrics.forEach(function(m){
-      hh+='<div class="hs-row"><span class="hs-label">'+m.l+'</span><div class="hs-bar"><div class="hs-bar-fill" style="width:'+m.v+'%"></div></div><span class="hs-val">'+m.v+'</span></div>';
+      hh+='<div class="hs-row"><span class="hs-label">'+m.l+'</span><div class="hs-bar"><div class="hs-bar-fill" style="width:'+m.v+'%"></div></div></div>';
     });
     hsEl.innerHTML=hh;
   }
