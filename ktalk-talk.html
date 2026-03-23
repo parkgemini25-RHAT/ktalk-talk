@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbitron:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/dist/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -854,8 +854,8 @@ body::after{
       <div class="summary-stats" id="summaryStats"></div>
       <div class="summary-insight" id="summaryInsight"></div>
     </div>
-    <!-- Health Score -->
-    <div class="summary-health" id="summaryHealthScore"></div>
+    <!-- Health Score (hidden from participants, visible in admin) -->
+    <div class="summary-health" id="summaryHealthScore" style="display:none"></div>
     <!-- QR Commitment (elevated) -->
     <div class="qr-elevated">
       <div class="qr-elevated-title">📱 오늘의 다짐을 남겨주세요</div>
