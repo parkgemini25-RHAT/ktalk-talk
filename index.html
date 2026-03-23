@@ -1978,24 +1978,40 @@ function renderAdminQuestions(){
     return;
   }
   var h='';
-  filtered.forEach(function(q,i){
-    var display=q.c==='bbang'?escapeHtml(q.bm):escapeHtml(q.t||'').substring(0,80);
-    var tipText=q.c==='bbang'?escapeHtml(q.bt):escapeHtml(q.tip||'');
-    var depthTag=(q.c!=='bbang'&&q.d)?' <span class="depth-badge" style="font-size:10px;vertical-align:middle">'+(depthLabels[q.d]||depthLabels[1])+'</span>':'';
-    h+='<div class="admin-q-item">';
-    h+='<div class="admin-q-item-num">'+(i+1)+'</div>';
-    h+='<div style="flex:1"><div class="admin-q-item-text">'+display+depthTag+'</div>';
-    if(tipText) h+='<div class="admin-q-item-tip">💡 '+tipText.substring(0,60)+(tipText.length>60?'...':'')+'</div>';
-    h+='</div>';
-    if(adminSession){
-      h+='<div class="admin-q-actions">';
-      h+='<button onclick="openEditForm('+q._id+')" title="수정"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button>';
-      h+='<button class="del" onclick="confirmDelete('+q._id+')" title="삭제"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>';
-      h+='</div>';
-    }
-    h+='</div>';
-  });
+  var isBbang=adminCat==='bbang';
+  if(isBbang){
+    filtered.forEach(function(q,i){
+      h+=renderAdminQItem(q,i+1);
+    });
+  }else{
+    [1,2,3].forEach(function(d){
+      var group=filtered.filter(function(q){return (q.d||1)===d});
+      if(!group.length) return;
+      h+='<div style="margin:12px 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--on-surface-dim)">'+depthLabels[d]+' <span style="opacity:0.5">('+group.length+')</span></div>';
+      group.forEach(function(q,i){
+        h+=renderAdminQItem(q,i+1);
+      });
+    });
+  }
   list.innerHTML=h;
+}
+function renderAdminQItem(q,num){
+  var display=q.c==='bbang'?escapeHtml(q.bm):escapeHtml(q.t||'').substring(0,80);
+  var tipText=q.c==='bbang'?escapeHtml(q.bt):escapeHtml(q.tip||'');
+  var depthTag=(q.c!=='bbang'&&q.d)?' <span class="depth-badge" style="font-size:10px;vertical-align:middle">'+(depthLabels[q.d]||depthLabels[1])+'</span>':'';
+  var h='<div class="admin-q-item">';
+  h+='<div class="admin-q-item-num">'+num+'</div>';
+  h+='<div style="flex:1"><div class="admin-q-item-text">'+display+depthTag+'</div>';
+  if(tipText) h+='<div class="admin-q-item-tip">💡 '+tipText.substring(0,60)+(tipText.length>60?'...':'')+'</div>';
+  h+='</div>';
+  if(adminSession){
+    h+='<div class="admin-q-actions">';
+    h+='<button onclick="openEditForm('+q._id+')" title="수정"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button>';
+    h+='<button class="del" onclick="confirmDelete('+q._id+')" title="삭제"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>';
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
 }
 
 function toggleBbangFields(){
