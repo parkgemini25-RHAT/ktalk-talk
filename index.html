@@ -701,11 +701,14 @@ body::after{
     </div>
     <div class="speaker-tracker" id="gachaSpeakerTracker"></div>
     <div class="participation-hint" id="gachaParticipationHint"></div>
-    <div class="gacha-actions" style="margin-top:12px">
-      <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
-      <button class="btn-secondary" onclick="bumpDepthDown()"><span class="material-symbols-outlined">arrow_downward</span>깊이-</button>
-      <button class="btn-secondary" onclick="bumpDepth()"><span class="material-symbols-outlined">arrow_upward</span>깊이+</button>
+    <div class="gacha-topic-picker" id="gachaTopicPicker"></div>
+    <div class="gacha-actions" style="margin-top:8px">
+      <button class="btn-primary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
       <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
+    </div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-top:6px">
+      <button class="btn-ghost" onclick="bumpDepthDown()" style="padding:6px 12px;font-size:12px"><span class="material-symbols-outlined" style="font-size:16px">arrow_downward</span>깊이-</button>
+      <button class="btn-ghost" onclick="bumpDepth()" style="padding:6px 12px;font-size:12px"><span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>깊이+</button>
     </div>
     <div class="session-bar" id="gachaSessionBar" style="display:none">
       <div class="session-timer">
@@ -1345,7 +1348,7 @@ function stopSessionTimer(){
 /* MIC SILENCE DETECTION */
 var micStream=null,micCtx=null,micAnalyser=null,micSilenceSec=0,micCheckTimer=null,micActive=false;
 var MIC_SILENCE_THRESHOLD=10;
-var MIC_NUDGE_SEC=30;
+var MIC_NUDGE_SEC=60;
 function startMic(){
   if(micActive) return;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) return;
@@ -1949,8 +1952,26 @@ function renderGachaTabs(){
   var c=cats[q.c];
   document.getElementById('gachaTabs').innerHTML='<span class="gacha-tab active">'+c.e+' '+c.l+'</span> <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
 }
+function renderGachaTopicPicker(){
+  var el=document.getElementById('gachaTopicPicker');
+  if(!el) return;
+  var keys=['warmup','jira','leader','peer','reflection'];
+  var h='<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">';
+  keys.forEach(function(k){
+    var c=cats[k];
+    var on=(k===state.selectedTopic);
+    h+='<div class="staging-topic-chip'+(on?' active':'')+'" onclick="switchGachaTopic(\''+k+'\')" style="font-size:11px;padding:4px 8px">'+c.e+' '+c.l+'</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+function switchGachaTopic(k){
+  state.selectedTopic=k;
+  reDraw();
+}
 function renderGacha(){
   renderGachaTabs();
+  renderGachaTopicPicker();
   renderPickCards();
   renderSpeakerTracker();
   var q=state.currentQuestion;if(!q)return;
@@ -1977,19 +1998,37 @@ var idleNudges=[
   '💡 대화가 멈춘 것 같아요 — 카드를 뽑아 새로운 주제로 전환해볼까요?',
   '🃏 잠시 쉬어가도 좋아요. 카드 한 장 뽑아볼까요?',
   '✨ 새로운 질문이 대화에 활력을 줄 수 있어요 — DRAW CARD!',
-  '🔄 흐름이 끊겼다면, 카드를 뽑아 리셋해보세요'
+  '🔄 흐름이 끊겼다면, 카드를 뽑아 리셋해보세요',
+  '🎯 잠시 멈추고, 지금까지 나온 핵심을 정리해볼까요?',
+  '🌊 흐름이 자연스러워요. 한 단계 더 깊이 들어가 볼까요?',
+  '💭 "왜 그렇게 생각하셨나요?" 라고 한 번 더 물어보세요',
+  '🔍 구체적인 사례를 하나 나눠달라고 요청해보세요',
+  '🤔 반대 의견이나 다른 시각이 있는지 물어보면 좋겠어요',
+  '📌 지금 나온 이야기 중 가장 중요한 것은 무엇인가요?'
 ];
 var balanceNudges=[
-  '🎯 {name}님의 이야기를 아직 충분히 듣지 못했어요. "{name}님은 어떻게 생각하세요?" 라고 물어봐 주세요',
+  '🎯 {name}님의 이야기를 아직 충분히 듣지 못했어요. "{name}님은 어떻게 생각하세요?"',
   '🤝 {name}님에게 발언 기회를 드려볼까요? 모두의 목소리가 중요합니다',
   '💬 {name}님이 말씀하실 공간을 열어주세요 — "혹시 다른 의견이 있으신가요?"',
-  '🌱 {name}님도 함께 나눌 이야기가 있을 거예요. 부드럽게 초대해 주세요'
+  '🌱 {name}님도 함께 나눌 이야기가 있을 거예요. 부드럽게 초대해 주세요',
+  '👂 {name}님, 지금 이야기에 대해 어떻게 느끼셨는지 궁금해요',
+  '🙋 {name}님의 경험에서 비슷한 상황이 있었나요?',
+  '🌟 {name}님만의 관점이 있을 것 같아요. 한마디 부탁드려도 될까요?',
+  '💫 {name}님도 공감되는 부분이 있으신가요?',
+  '🎤 {name}님, 이 주제에서 가장 중요하다고 생각하시는 점은요?',
+  '🤲 {name}님의 의견도 팀에 큰 도움이 됩니다. 편하게 말씀해주세요'
 ];
 var silenceNudges=[
   '지금 침묵은 깊이 생각하는 중입니다 🧠',
   '좋은 흐름이에요, 조금 더 가볼까요?',
   '핵심을 한 문장으로 정리해보세요',
-  '다른 관점에서 바라보면 어떨까요?'
+  '다른 관점에서 바라보면 어떨까요?',
+  '지금 느끼는 감정을 한 단어로 표현한다면? 🎨',
+  '이 이야기가 실제 업무에 어떻게 적용될 수 있을까요? 🛠️',
+  '오늘 대화에서 가장 인상 깊은 한마디는? 💎',
+  '서로의 공통점이 보이시나요? 그걸 기반으로 이야기해보세요 🔗',
+  '만약 6개월 후를 상상한다면, 어떤 변화가 있을까요? 🔮',
+  '"그래서 나는 이렇게 하겠다"로 정리해보면 어떨까요? ✅'
 ];
 var nudgeIdleSec=0;
 function startNudgeTimer(){
@@ -1998,7 +2037,7 @@ function startNudgeTimer(){
   state.nudgeTimer=setInterval(function(){
     if(!anySpeaking()){
       nudgeIdleSec++;
-      if(nudgeIdleSec===30) showSmartNudge('idle');
+      if(nudgeIdleSec===60) showSmartNudge('idle');
     }else{
       nudgeIdleSec=0;
     }
