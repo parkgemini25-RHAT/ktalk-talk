@@ -684,7 +684,7 @@ body::after{
     </div>
     <div class="staging-topic" id="stagingTopic"></div>
     <div class="staging-visual">
-      <div class="staging-emoji">🎤</div>
+      <div class="staging-emoji">💬</div>
       <div class="staging-msg">대화가 진행 중입니다</div>
       <div class="staging-hint" id="stagingHint">발언자를 클릭하거나 숫자키(1~7)로 기록하세요</div>
     </div>
@@ -695,10 +695,6 @@ body::after{
       <button class="btn-primary" onclick="drawFromStaging()"><span class="material-symbols-outlined">style</span>DRAW CARD</button>
     </div>
     <div class="session-bar" id="stagingSessionBar" style="display:none">
-      <div class="session-timer">
-        <span class="material-symbols-outlined">timer</span>
-        <div><div class="session-label">SESSION</div><span id="stagingSessionTime">0:00:00</span></div>
-      </div>
       <button class="btn-end-session" onclick="endSession()">세션 종료</button>
     </div>
   </div>
@@ -731,10 +727,6 @@ body::after{
       <button class="btn-ghost" onclick="bumpDepth()" style="padding:6px 12px;font-size:12px"><span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>깊이+</button>
     </div>
     <div class="session-bar" id="gachaSessionBar" style="display:none">
-      <div class="session-timer">
-        <span class="material-symbols-outlined">timer</span>
-        <div><div class="session-label">SESSION</div><span id="gachaSessionTime">0:00:00</span></div>
-      </div>
       <button class="btn-end-session" onclick="endSession()">세션 종료</button>
     </div>
   </div>
