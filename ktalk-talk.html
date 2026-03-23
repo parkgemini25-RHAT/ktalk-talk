@@ -951,7 +951,7 @@ function showScreen(id){
     renderAdminPanel();
     if(adminSession) loadHistory();
   }
-  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll()}
+  if(id==='home'){state.sessionSeconds=0;state.speakTime=[];state.speakingPlayers=[];state.turnCount=[];state.sessionId=null;state.healthScore=null;syncSessionBar(false);stopCommitPoll();stopMic()}
 }
 
 /* PLAYER SETUP — max 7 */
@@ -1087,6 +1087,7 @@ function renderStaging(){
   renderSpeakerTracker();
   lastBalanceNudgeAt=0;
   startNudgeTimer();
+  startMic();
 }
 function renderStagingTopicPicker(){
   var el=document.getElementById('stagingTopicPicker');
@@ -1188,6 +1189,58 @@ function startSessionTimer(){
 function stopSessionTimer(){
   if(state.sessionTimer){clearInterval(state.sessionTimer);state.sessionTimer=null}
 }
+
+/* MIC SILENCE DETECTION */
+var micStream=null,micCtx=null,micAnalyser=null,micSilenceSec=0,micCheckTimer=null,micActive=false;
+var MIC_SILENCE_THRESHOLD=10;
+var MIC_NUDGE_SEC=30;
+function startMic(){
+  if(micActive) return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) return;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    micStream=stream;
+    micCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var src=micCtx.createMediaStreamSource(stream);
+    micAnalyser=micCtx.createAnalyser();
+    micAnalyser.fftSize=512;
+    src.connect(micAnalyser);
+    micActive=true;
+    micSilenceSec=0;
+    micCheckTimer=setInterval(checkMicLevel,1000);
+  }).catch(function(e){console.log('mic access denied',e)});
+}
+function checkMicLevel(){
+  if(!micAnalyser) return;
+  var buf=new Uint8Array(micAnalyser.fftSize);
+  micAnalyser.getByteTimeDomainData(buf);
+  var sum=0;
+  for(var i=0;i<buf.length;i++){var v=buf[i]-128;sum+=v*v}
+  var rms=Math.sqrt(sum/buf.length);
+  if(rms<MIC_SILENCE_THRESHOLD){
+    micSilenceSec++;
+    if(micSilenceSec===MIC_NUDGE_SEC) showMicNudge();
+  }else{
+    micSilenceSec=0;
+  }
+}
+var micNudgeMessages=[
+  '🎤 조용한 시간이 길어지고 있어요 — 카드를 뽑아 대화를 이어가 볼까요?',
+  '🃏 30초 넘게 조용해요. 새 질문 카드로 흐름을 바꿔보세요!',
+  '💡 대화가 멈춘 것 같아요. DRAW CARD 버튼을 눌러보세요!',
+  '🔄 잠시 쉬었으니, 카드 한 장 뽑고 다시 시작해볼까요?'
+];
+function showMicNudge(){
+  var msg=micNudgeMessages[Math.floor(Math.random()*micNudgeMessages.length)];
+  showNudgeMsg(msg,'idle');
+  micSilenceSec=0;
+}
+function stopMic(){
+  if(micCheckTimer){clearInterval(micCheckTimer);micCheckTimer=null}
+  if(micCtx){micCtx.close().catch(function(){});micCtx=null}
+  if(micStream){micStream.getTracks().forEach(function(t){t.stop()});micStream=null}
+  micAnalyser=null;micActive=false;micSilenceSec=0;
+}
+
 function syncSessionBar(show){
   var ids=['stagingSessionBar','gachaSessionBar'];
   for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)el.style.display=show?'flex':'none'}
@@ -1196,6 +1249,7 @@ function endSession(){
   stopSessionTimer();
   stopSpeakTimer();
   clearNudgeTimer();
+  stopMic();
   syncSessionBar(false);
   showScreen('summary');
   renderSummary();
