@@ -340,6 +340,22 @@ body::after{
 .hd-commit-text{font-size:13px;color:var(--on-surface-dim);margin-top:4px}
 .btn-delete{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:24px;background:rgba(255,0,127,0.1);border:1px solid rgba(255,0,127,0.3);border-radius:12px;color:var(--primary);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}
 .btn-delete:active{background:rgba(255,0,127,0.2)}
+.admin-toggle-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:var(--on-surface)}
+.toggle-switch{position:relative;display:inline-block;width:40px;height:22px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.1);border-radius:22px;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:var(--on-surface-dim);border-radius:50%;transition:.3s}
+.toggle-switch input:checked+.toggle-slider{background:var(--secondary)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px);background:#fff}
+/* PICK ORDER */
+.pick-area{width:100%;max-width:480px;margin:12px 0}
+.pick-cards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.pick-card{min-width:70px;padding:10px 14px;background:var(--surface);border:2px solid var(--outline-dim);border-radius:12px;text-align:center;font-size:13px;font-weight:700;color:var(--on-surface);position:relative;transition:all .15s}
+.pick-card.picking{border-color:var(--secondary);box-shadow:0 0 12px rgba(0,240,255,0.4);transform:scale(1.08)}
+.pick-card.picked{border-color:var(--tertiary);opacity:0.6}
+.pick-card.just-picked{border-color:var(--primary);box-shadow:0 0 16px rgba(255,0,127,0.5);transform:scale(1.1);opacity:1}
+.pick-badge{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pick-result{text-align:center;margin-top:10px;font-size:14px;font-weight:700;color:var(--secondary);min-height:20px}
 .hc-top{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--on-surface-dim);margin-bottom:6px;flex-wrap:wrap}
 .hc-num{font-weight:700;color:var(--on-surface)}
 .hc-bottom{display:flex;gap:14px;align-items:center;font-size:14px;font-weight:600}
@@ -652,6 +668,12 @@ body::after{
       <div class="staging-msg">대화가 진행 중입니다</div>
       <div class="staging-hint">발언자를 클릭하거나 숫자키(1~7)로 기록하세요</div>
     </div>
+    <!-- Pick Order -->
+    <div class="pick-area">
+      <button class="btn-secondary" onclick="pickNextSpeaker()" id="btnPickSpeaker" style="width:100%"><span class="material-symbols-outlined">casino</span>🎲 순서 뽑기</button>
+      <div class="pick-cards" id="pickCards"></div>
+      <div class="pick-result" id="pickResult"></div>
+    </div>
     <div class="speaker-tracker" id="speakerTracker"></div>
     <div class="staging-nudge" id="stagingNudge"></div>
     <div class="staging-topic-picker" id="stagingTopicPicker"></div>
@@ -681,6 +703,7 @@ body::after{
     <div class="participation-hint" id="gachaParticipationHint"></div>
     <div class="gacha-actions" style="margin-top:12px">
       <button class="btn-secondary" onclick="reDraw()"><span class="material-symbols-outlined">casino</span>RE-DRAW</button>
+      <button class="btn-secondary" onclick="bumpDepthDown()"><span class="material-symbols-outlined">arrow_downward</span>깊이-</button>
       <button class="btn-secondary" onclick="bumpDepth()"><span class="material-symbols-outlined">arrow_upward</span>깊이+</button>
       <button class="btn-ghost" onclick="backToStaging()"><span class="material-symbols-outlined">arrow_back</span>BACK</button>
     </div>
@@ -715,6 +738,18 @@ body::after{
 
     <!-- Admin Content (hidden until login) -->
     <div id="adminContent" style="display:none;width:100%;max-width:360px;flex-direction:column;align-items:center">
+      <!-- Settings -->
+      <div style="width:100%;margin-bottom:16px;padding:12px;background:var(--surface);border-radius:12px;border:1px solid var(--outline-dim)">
+        <div style="font-size:13px;font-weight:700;color:var(--on-surface-dim);letter-spacing:2px;margin-bottom:10px">세션 설정</div>
+        <div class="admin-toggle-row">
+          <span>발언자 추적</span>
+          <label class="toggle-switch"><input type="checkbox" id="togSpeaker" onchange="adminSettings.speakerTracking=this.checked"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="admin-toggle-row">
+          <span>마이크 감지</span>
+          <label class="toggle-switch"><input type="checkbox" id="togMic" onchange="adminSettings.micDetection=this.checked"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
       <div class="gacha-tabs" id="adminCatTabs" style="margin-bottom:8px"></div>
       <div class="admin-count" id="adminCount"></div>
 
@@ -847,6 +882,7 @@ try{sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_K
 var dbReady=false;
 var adminSession=null;
 var ADMIN_PW='ktalk2024!';
+var adminSettings={speakerTracking:false,micDetection:false};
 
 /* DATA */
 var cats={
@@ -1115,14 +1151,91 @@ function setDepth(d){
 function bumpDepth(){
   if(state.depth<3){setDepth(state.depth+1);renderGachaTabs()}
 }
+function bumpDepthDown(){
+  if(state.depth>1){setDepth(state.depth-1);renderGachaTabs()}
+}
+
+/* PICK ORDER */
+var pickedOrder=[];
+var pickAnimTimer=null;
+function renderPickCards(){
+  var el=document.getElementById('pickCards');
+  if(!el) return;
+  var h='';
+  for(var i=0;i<state.playerCount;i++){
+    var name=state.playerNames[i]||('P'+(i+1));
+    var idx=pickedOrder.indexOf(i);
+    var isPicked=idx>=0;
+    h+='<div class="pick-card'+(isPicked?' picked':'')+'" id="pickCard-'+i+'">';
+    if(isPicked) h+='<div class="pick-badge">'+(idx+1)+'</div>';
+    h+=escapeHtml(name);
+    h+='</div>';
+  }
+  el.innerHTML=h;
+  var btn=document.getElementById('btnPickSpeaker');
+  if(btn){
+    if(pickedOrder.length>=state.playerCount){
+      btn.innerHTML='<span class="material-symbols-outlined">refresh</span>순서 초기화';
+      btn.onclick=function(){resetPickOrder()};
+    }else{
+      btn.innerHTML='<span class="material-symbols-outlined">casino</span>🎲 순서 뽑기';
+      btn.onclick=function(){pickNextSpeaker()};
+    }
+  }
+}
+function pickNextSpeaker(){
+  if(pickAnimTimer) return;
+  var remaining=[];
+  for(var i=0;i<state.playerCount;i++){
+    if(pickedOrder.indexOf(i)<0) remaining.push(i);
+  }
+  if(!remaining.length){resetPickOrder();return}
+  var chosen=remaining[Math.floor(Math.random()*remaining.length)];
+  var count=0;
+  var maxCount=15;
+  pickAnimTimer=setInterval(function(){
+    count++;
+    // clear all picking
+    for(var j=0;j<state.playerCount;j++){
+      var c=document.getElementById('pickCard-'+j);
+      if(c) c.classList.remove('picking');
+    }
+    if(count>=maxCount){
+      clearInterval(pickAnimTimer);
+      pickAnimTimer=null;
+      pickedOrder.push(chosen);
+      renderPickCards();
+      // highlight just-picked
+      var card=document.getElementById('pickCard-'+chosen);
+      if(card){card.classList.add('just-picked');setTimeout(function(){card.classList.remove('just-picked')},1500)}
+      var resEl=document.getElementById('pickResult');
+      var name=state.playerNames[chosen]||('P'+(chosen+1));
+      if(resEl) resEl.textContent=pickedOrder.length+'번째: '+name+'!';
+      return;
+    }
+    // random highlight
+    var rnd=remaining[Math.floor(Math.random()*remaining.length)];
+    var rc=document.getElementById('pickCard-'+rnd);
+    if(rc) rc.classList.add('picking');
+  },100);
+}
+function resetPickOrder(){
+  if(pickAnimTimer){clearInterval(pickAnimTimer);pickAnimTimer=null}
+  pickedOrder=[];
+  renderPickCards();
+  var resEl=document.getElementById('pickResult');
+  if(resEl) resEl.textContent='';
+}
+
 function renderStaging(){
   var c=cats[state.selectedTopic];
   document.getElementById('stagingTopic').innerHTML='<span style="font-size:18px">'+c.e+'</span> '+c.l+' <span class="depth-badge">'+depthLabels[state.depth]+'</span>';
   renderStagingTopicPicker();
+  renderPickCards();
   renderSpeakerTracker();
   lastBalanceNudgeAt=0;
   startNudgeTimer();
-  startMic();
+  if(adminSettings.micDetection) startMic();
 }
 function renderStagingTopicPicker(){
   var el=document.getElementById('stagingTopicPicker');
@@ -1149,6 +1262,12 @@ function switchStagingTopic(k){
 }
 function fmtSec(s){var m=Math.floor(s/60);var ss=s%60;return m+':'+(ss<10?'0':'')+ss}
 function renderSpeakerTracker(){
+  var ids2=['speakerTracker','gachaSpeakerTracker'];
+  if(!adminSettings.speakerTracking){
+    for(var x=0;x<ids2.length;x++){var ex=document.getElementById(ids2[x]);if(ex)ex.innerHTML=''}
+    var hx=document.getElementById('gachaParticipationHint');if(hx)hx.textContent='';
+    return;
+  }
   if(!state.speakTime.length) state.speakTime=new Array(state.playerCount).fill(0);
   if(!state.speakingPlayers.length) state.speakingPlayers=new Array(state.playerCount).fill(false);
   var maxT=Math.max.apply(null,state.speakTime)||1;
@@ -1801,6 +1920,7 @@ function drawFromStaging(){
 
 /* RE-DRAW from gacha */
 function reDraw(){
+  resetPickOrder();
   pickQuestion();
   runSlot(function(){
     renderGacha();
